@@ -66,7 +66,6 @@ Une fiche par jeu de données. Les fichiers bruts sont dans `data/raw/` (jamais 
 |Format|xlsx, 2 450 989 octets (2,45 Mo), 18 onglets|
 |Transformations prévues|Extraire les âges 0 à 105+ de `populationF` et `populationH` ; extraire les quotients de mortalité de `hyp\_mortaliteF` et `hyp\_mortaliteH` ; extraire la fécondité de `hyp\_fecondite` et les naissances de `naissance` ; extraire le solde migratoire de `solde\_migratoire`. Ne garder que 2026 à 2070 pour le benchmark. Produire des tables au format long dans `data/processed/`|
 |Version du simulateur|v0.1 (validation et hypothèses centrales)|
->>>>>>> a3869af9adf18fd105324c36dc422ffa95c165cc
 
 ### Contenu des onglets utiles
 
