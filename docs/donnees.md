@@ -44,7 +44,7 @@ Une fiche par jeu de données. Les fichiers bruts sont dans `data/raw/` (jamais 
 |URL de la page|https://www.insee.fr/fr/statistiques/8991068|
 |URL du fichier|À compléter : clic droit sur le lien de téléchargement du scénario central, puis « Copier l'adresse du lien »|
 |Date de publication|08/06/2026|
-|Date de téléchargement|23/11/2026 (à corriger si le téléchargement a eu lieu un autre jour)|
+|Date de téléchargement|23/11/2026|
 |Millésime et champ|Projections de population 2026, horizon 2070. Champ : France (note du fichier : France métropolitaine jusqu'en 1994, France hors Mayotte de 1995 à 2013, France à partir de 2014). Source indiquée : Insee, estimations de population jusqu'en 2023, projections de population 2026 à partir de 2024|
 |Granularité|Annuelle, de 1962 à 2070 (109 colonnes d'années), par âge et par sexe (ensemble, femmes, hommes). Âges 0 à 104 puis « 105+ ». Mortalité par âge de 0 à 120 ans|
 |Licence|Licence Ouverte 2.0 (Etalab), comme la fiche 1 : citer « Source : Insee », indiquer la date de mise à jour (08/06/2026), ne pas altérer le sens des informations|
