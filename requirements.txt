@@ -9,3 +9,6 @@ scipy>=1.9
 pyyaml>=6.0
 matplotlib>=3.7
 pytest>=7.4
+ipykernel>=7.4.0
+jupyter>=1.1.1
+matplotlib>=3.11.2
