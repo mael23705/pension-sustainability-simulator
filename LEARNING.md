@@ -1,6 +1,6 @@
 # Journal d'apprentissage
 
-Une ligne par notion apprise, **dans tes propres mots**. Les lignes ci-dessous sont des amorces à reformuler. Complète la colonne « Preuve » avec un commit, un test ou un graphique.
+Une ligne par notion apprise. Les lignes ci-dessous sont des amorces à reformuler. Complète la colonne « Preuve » avec un commit, un test ou un graphique.
 
 | Date | Notion | Ce que j'en retiens | Où dans le projet | Preuve |
 |---|---|---|---|---|
@@ -19,4 +19,4 @@ Une ligne par notion apprise, **dans tes propres mots**. Les lignes ci-dessous s
 - [ ] matplotlib : pyramide des âges
 - [ ] GitHub Actions : un workflow minimal qui lance les tests
 
-Chaque notion : 1 à 3 heures, puis une ligne ici.
+
