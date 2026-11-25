@@ -4,7 +4,7 @@ Ce document accompagne la section 6 du cahier des charges (révision 6) et les f
 
 Statuts : **O** observé · **P** projection officielle · **C** calibré · **H** hypothèse documentée · **K** convention (voir 6.1 du cahier).
 
-Dernière mise à jour : 25/11/2026.
+Dernière mise à jour : 25/11/2026 (décisions D6 à D15).
 
 ## 1. Décisions validées le 25/11/2026
 
@@ -15,6 +15,16 @@ Dernière mise à jour : 25/11/2026.
 | D3 | Migrants $\pi^{\text{mig}}_c$ | H | Égaux à $\pi_c$ pour $a \geq a_0$ ; stock non segmenté pour $a < a_0$ | Mêmes plages que D2 | Règle la plus simple qui conserve les effectifs (cahier, 3.5, point 4). |
 | D4 | Rattachement des régimes à une catégorie | H | Régimes spéciaux (SNCF, RATP, industries électriques et gazières, etc.) rattachés au **public** ; Cavimac et Mayotte exclus (exclusion des **régimes de retraite** ; le moteur démographique couvre la France entière, Mayotte incluse : `docs/conventions-moteur.md`, section 4) | Sensibilité : rattacher les régimes spéciaux hors fonction publique au privé | Ces régimes à prestations définies ressemblent à ceux des fonctionnaires. Simplification à rappeler dans le README. |
 | D5 | Âges légaux fractionnaires | K | Arrondi à l'entier le plus proche (0,5 arrondi vers le haut) ; les générations 1961 et 1965, coupées en deux périodes, sont moyennées au prorata de la durée | Arrondi inférieur et supérieur | Le modèle compte en âges entiers. L'écart résiduel est absorbé par $\delta_{c,s}$. Valeurs dans `config/assumptions.yaml`. |
+| D6 | Concept d'emploi | K | **Comptabilité nationale** (COR : 30,6 millions en 2025). Le niveau vient de la comptabilité nationale ; le profil par âge et par sexe vient de l'enquête Emploi 2025, mis à l'échelle par un facteur unique, constant sur tous les âges, calé sur le total (30,6 / 29,4, soit environ 1,04) | Facteur de 1,00 (enquête brute) à 1,04 | Décidé par Maël le 25/11/2026. Le facteur est un calcul de calibration à refaire en phase 3, pas une donnée. Limite : on suppose que l'écart entre les deux concepts est proportionnel à tous les âges ; le test $0 \leq e \leq 1$ (T11) vérifie le résultat. |
+| D7 | Unité des pensions et des salaires | H | Calibration en **brut**. `m1` est traité comme brut. Privé : net × 1,318. Public : net × 1,23. Indépendants : revenu d'activité net utilisé tel quel | `m1` brut ou net : test d'homogénéité (voir justification) | Déléguée à Claude le 25/11/2026, à relire. La documentation EACR ne dit pas si `m1` est brut ou net. Argument de grandeur : 1 647 euros (`m1`) est inférieur à 1 752 euros brut du panorama DREES, qui inclut la majoration pour trois enfants. Comme $\tau_0 = B_{2026}/A_{2026}$, un facteur commun appliqué à toutes les pensions se compense dans le calibrage ; seul le rapport entre pensions et salaires par catégorie compte, et il est absorbé par $\theta_c$. Limite : pas de rapport brut/net relevé pour les indépendants. |
+| D8 | Du stock 2024 à l'année 2026 | H | Pensions de `m1` avancées de 2024 à 2026 par le facteur de revalorisation de base $1{,}022 \times 1{,}009 = 1{,}0312$. Effectifs : ceux du moteur démographique en 2026 | Facteur de 1,000 à 1,0312 | Déléguée à Claude, à relire. 1,0312 est une borne haute : seules les pensions de base sont revalorisées (l'Agirc-Arrco ne l'a pas été en 2025) et l'effet de composition (nouveaux liquidants) est ignoré. Les salaires de 2024 sont ramenés à 2026 avec la même convention de prix ; le déflateur sourcé est à fixer en phase 3. |
+| D9 | Salaire à 62-64 ans | H | Aucune source par âge au-delà de 60 ans. Proxy : salaire de la tranche d'âge la plus âgée disponible dans chaque catégorie. L'écart est absorbé dans $\theta_c$, appelé « taux de remplacement apparent » | FPH : 2 994 euros (50-59 ans) contre 3 789 euros (60 ans et plus) | Déléguée à Claude, à relire. Un décalage constant du salaire de référence est compensé par $\theta_c$, calibré sur la pension des nouveaux liquidants. Limite : on ne peut pas tester séparément le niveau de $\theta_c$ et celui du salaire de fin de carrière. |
+| D10 | Grille d'âge des salaires | K | Pas de grille commune. Chaque catégorie garde ses tranches, transformées en âges individuels par une fonction en escalier (pas d'interpolation). Pour les séries sans croisement âge × sexe (FPH), l'écart entre sexes est celui de la moyenne de la catégorie, supposé indépendant de l'âge | Avec ou sans écart entre sexes | Déléguée à Claude, à relire. L'interpolation inventerait de la précision que les sources n'ont pas. Si la moyenne par sexe n'est pas disponible dans la source, le salaire est identique pour les deux sexes (à écrire dans la fiche 8). |
+| D11 | Professions libérales (CNAVPL) et parts $\pi_c$ | H | $\pi$ inchangé : (0,70 ; 0,19 ; 0,11). Les 992 000 cotisants de la CNAVPL (2023) servent de **contrôle**, pas de calibrage | Indépendants de 0,09 à 0,14 (plage de D2) | Déléguée à Claude, à relire. Contrôle : SSI et agricole (3,3 millions) plus CNAVPL (0,99 million) font environ 4,3 millions, soit environ 14 % de 30,6 millions : le haut de la plage de D2. Non comparable avec les 1,297 million de professions libérales d'Insee (concept différent). La sensibilité à 0,14 couvre l'écart. |
+| D12 | Rendement réel des réserves | H | Valeur centrale **1,0 %** par an en réel | De −1 % à +3 % | Déléguée à Claude, à relire. Hypothèse documentée, pas une valeur observée. Repères de marché AFT (15/10/2026) : 1,83 % à 2,87 % sur des obligations indexées, dont le caractère réel est à confirmer. La valeur centrale est volontairement inférieure : un portefeuille de réserves n'est pas une obligation indexée seule. Le haut de la plage (3 %) correspond au haut des repères AFT. Faible enjeu dans le scénario de référence ($k = 0$, donc pas de réserve). |
+| D13 | Écart de 123 445 personnes (EACR) | H | Non corrigé. Les âges individuels donnent les poids relatifs ; la ligne « Ensemble » donne le niveau, par remise à l'échelle | — | Déléguée à Claude, à relire. L'écart représente environ 0,7 % du stock (fiche 10). Il est documenté, pas expliqué. |
+| D14 | Stock de retraités par catégorie | H | Même règle que D2 et D3 : parts $\pi_c$ pour tous les âges. Les polypensionnés sont rattachés à leur régime principal | Plage de D2 | Déléguée à Claude, à relire. Contrôle sur le panorama DREES 2026 (tableau 3, fin 2024, régime principal) : régime général 70 % ; public (FPE civils, FPE militaires, CNRACL, régimes spéciaux) environ 20 % ; non-salariés 5 %. Le public est proche de 0,19. Les indépendants (5 %) ne sont pas comparables à 0,11 : l'ex-SSI est dans le régime général depuis 2020. |
+| D15 | Plage de la réserve initiale $k$ | K | Plage $[0 ; 3]$ conservée, **provisoire** | $k \in [0 ; 3]$ | Déléguée à Claude. Les réserves de régimes réels n'ont pas été relevées : la justification est reportée à la phase 5. Aucune valeur de $k$ n'est présentée comme un résultat avant. |
 
 ## 2. Démographie
 
@@ -33,13 +43,13 @@ Réserve sur la population initiale par catégorie : l'EACR compte les polypensi
 
 | Paramètre | Statut | Valeur ou méthode | Plage de test | Source |
 |---|---|---|---|---|
-| Taux d'emploi observé $e^{\text{obs}}$ | O | Enquête Emploi par sexe et tranche d'âge (3 tranches seulement) ; à affiner par âge quinquennal | À fixer en phase 3 | Fiche 6 |
+| Taux d'emploi observé $e^{\text{obs}}$ | O | Enquête Emploi 2025, par âge individuel (15-64 ans) et tranches au-delà ; mis à l'échelle sur la comptabilité nationale (D6) | Facteur de 1,00 à 1,04 | Fiche 6 |
 | Taux d'emploi conditionnel $e$ | C | $e = e^{\text{obs}}/(1-\rho)$, sans plafonnement ; violation de $0 \leq e \leq 1$ : le test échoue | — | Cahier, 3.5 |
-| Concept d'emploi | K | À arrêter : comptabilité nationale (COR : 30,6 millions en 2025) ou enquête Emploi (29,4 millions) | — | Fiches 6 et 7 |
+| Concept d'emploi | K | **Comptabilité nationale** (COR : 30,6 millions en 2025) : décision D6, prise par Maël le 25/11/2026 | — | Fiches 6 et 7 |
 | Salaire $w_{c,a,s}$ privé | O | Salaire net mensuel moyen en équivalent temps plein par sexe et tranche d'âge (2024) | À fixer en phase 3 | Fiche 8 |
 | Salaire $w_{c,a,s}$ public | O | Fonction publique d'État et territoriale par tranche d'âge (2024) ; hospitalière : à compléter | À fixer en phase 3 | Fiche 8 |
 | Salaire $w_{c,a,s}$ indépendants | O | Revenu d'activité net mensuel (2022), non comparable à un salaire en équivalent temps plein | À fixer en phase 3 | Fiche 8 |
-| Passage brut-net | H | Rapport brut/net du public : environ 1,23 ; privé : à relever | À fixer en phase 3 | Fiche 8 |
+| Passage brut-net | O et H | Privé : 1,318 (Insee Première 2079 : 3 602 euros brut, 2 733 euros net en 2024) ; public : 1,23 ; indépendants : sans conversion (D7) | Voir D7 | Fiche 8 |
 | Assiette de cotisation | K | Masse salariale totale sans plafond | — | Cahier, 6.3 |
 | Croissance réelle des salaires | P | Scénario de référence du COR : productivité horaire 0,7 % par an à partir de 2040 ; trajectoire 2026-2039 à relever | Productivité 0,4 % à 1,0 % ; chômage 5 % à 10 % | Fiche 11 ; COR |
 
@@ -49,18 +59,18 @@ Réserve sur la population initiale par catégorie : l'EACR compte les polypensi
 |---|---|---|---|---|
 | Âge légal par génération $a^{lég}(g)$ | O | Tableau 1.4 du COR (loi de financement de la sécurité sociale pour 2026, suspension de la réforme de 2023), arrondi selon D5 | Variante sans suspension : levier de réforme | Fiche 9 |
 | Écart $\delta_{c,s}$ entre âge effectif et âge légal | C | Âge conjoncturel de départ (EACR) moins âge légal de la génération concernée, arrondi à l'entier ; constant sur l'horizon | $\pm 1$ an | Fiches 9 et 10 ; **à calculer** |
-| Stock de pensions de 2026 | O | EACR, `m1` (avantage principal de droit direct, perçu en décembre), indexé. **Dernière année observée : 2024** | — | Fiche 10 |
+| Stock de pensions de 2026 | O | EACR, `m1` (avantage principal de droit direct, perçu en décembre), avancé de 2024 à 2026 par le facteur 1,0312 (D8) ; traité comme brut (D7) | Facteur de 1,000 à 1,0312 | Fiche 10 |
 | Taux de liquidation $\theta_c$ | C | Pension des nouveaux liquidants / salaire à l'âge de départ de la même génération (3.6) ; contrôle par les cas types du COR ; à défaut, ratio de stock appelé « taux de remplacement apparent ». **Aucune valeur tant que le brut ou net de `m1` n'est pas confirmé** | À fixer en phase 3 | Fiche 10 |
-| Indexation des pensions | O | Sur les prix ; +0,9 % au 1er janvier 2026 pour les pensions de base (COR) ; revalorisation 2025 : à relever | Variantes : salaire moyen, revenu de la catégorie | Fiches 9 et 10 |
+| Indexation des pensions | O | Sur les prix ; +2,2 % au 1er janvier 2025 (instruction DSS/SD3A/DB/2024/176) ; +0,9 % au 1er janvier 2026 pour les pensions de base (COR) | Variantes : salaire moyen, revenu de la catégorie | Fiches 9 et 10 |
 
 ## 5. Finances et incertitude
 
 | Paramètre | Statut | Valeur ou méthode | Plage de test | Source |
 |---|---|---|---|---|
 | Taux de cotisation $\tau_0$ | C | $\tau_0 = B_{2026}/A_{2026}$ : taux de calibration du modèle, pas un taux légal ; l'équilibre de 2026 est une condition de calibration, pas un résultat | $\tau$ varie dans $[0, \tau_{\max}]$ pour $\tau^*$ | Cahier, 6.2 |
-| Réserve initiale | K | $R_{2026} = k \times B_{2026}$ ; référence $k = 0$ | $k \in [0 ; 3]$ ; plage à justifier avec des réserves de régimes réels (phase 3) | Cahier, 4.1 |
+| Réserve initiale | K | $R_{2026} = k \times B_{2026}$ ; référence $k = 0$ | $k \in [0 ; 3]$, provisoire (D15) ; justification reportée en phase 5 | Cahier, 4.1 |
 | Financement externe $F_t$ | K | 0 dans le scénario central | — | Cahier, 4.2 |
-| Rendement réel des réserves | H (provisoire) | **À sourcer.** Repère indicatif de la fiche 11 : environ 2,7 % à 3,1 % réel pour l'OAT à 10 ans (calcul indicatif à partir d'une source secondaire) ; ne vaut pas rendement d'un portefeuille | À fixer avec une source primaire (Agence France Trésor) | Fiche 11 |
+| Rendement réel des réserves | H | Valeur centrale 1,0 % par an en réel (D12) ; repères AFT du 15/10/2026 : 1,83 % à 2,87 % (obligations indexées) | De −1 % à +3 % | Fiche 11 ; AFT |
 | Taux d'actualisation réel | H | À définir en phase 4 | À définir | Cahier, 6.3 |
 | Simulations | K | $N = 10\,000$ ; graine fixe ; $\alpha \in \{0{,}80 ; 0{,}90 ; 0{,}95\}$ ; borne de Wilson à 95 % | $N$ ajustable | Cahier, 4.4 |
 
@@ -68,12 +78,12 @@ Réserve sur la population initiale par catégorie : l'EACR compte les polypensi
 
 Ces points étaient dans la phase 1 du plan. Ils ne bloquent pas le moteur démographique (phase 2), mais bloquent le calibrage du moteur financier.
 
-1. Brut ou net de `m1` : la documentation EACR ne le précise pas (fiche 10).
-2. Répartition du stock de retraités par catégorie, compte tenu du double comptage des polypensionnés.
-3. Passage de la dernière année observée (2024) à l'année de calibration (2026) : avancer le stock ou calibrer sur 2024.
-4. Revalorisation 2025 des pensions de base.
-5. Écart de 123 445 personnes entre les âges individuels et la ligne « Ensemble » de l'EACR.
-6. Concept d'emploi (comptabilité nationale ou enquête Emploi) et taux d'emploi par âge détaillé.
-7. Plages de test des paramètres financiers, plage de $k$ justifiée.
-8. Rendement réel des réserves à partir d'une source primaire.
-9. Effectif des professions libérales (CNAVPL) et salaires de la fonction publique hospitalière par âge.
+1. Brut ou net de `m1` : la documentation EACR ne le précise pas (fiche 10). Le panorama DREES 2026 donne une pension de 1 752 euros brut qui inclut la majoration pour trois enfants : définition différente de `m1`. **Tranché le 25/11/2026 (D7)** : traité comme brut, effet de niveau compensé par le calibrage de $\tau_0$.
+2. Répartition du stock de retraités par catégorie, compte tenu du double comptage des polypensionnés. **Tranché le 25/11/2026 (D14)** : règle des $\pi_c$, contrôle sur le tableau 3 du panorama DREES 2026.
+3. Passage de la dernière année observée (2024) à l'année de calibration (2026). **Tranché le 25/11/2026 (D8)** : facteur 1,0312, plage de 1,000 à 1,0312.
+4. Revalorisation 2025 des pensions de base. **Réglé le 25/11/2026** : +2,2 % au 1er janvier 2025 (coefficient 1,022), instruction interministérielle DSS/SD3A/DB/2024/176 (fiche 10).
+5. Écart de 123 445 personnes entre les âges individuels et la ligne « Ensemble » de l'EACR. **Tranché le 25/11/2026 (D13)** : non corrigé, remise à l'échelle sur « Ensemble ».
+6. Concept d'emploi et taux d'emploi par âge détaillé. **Réglé le 25/11/2026 (D6)** : comptabilité nationale pour le niveau, enquête Emploi 2025 par âge individuel pour le profil (fiche 6). Reste à faire en phase 3 : calculer le facteur d'échelle et le script qui reconstruit `data/processed/taux-emploi-age-sexe-2025.csv`.
+7. Plages de test des paramètres financiers, plage de $k$ justifiée. **Partiel le 25/11/2026** : plages de D8 et D12 posées ; plage de $k$ provisoire (D15), justification reportée en phase 5.
+8. Rendement réel des réserves à partir d'une source primaire. **Valeur centrale posée le 25/11/2026 (D12 : 1,0 %, plage de −1 % à +3 %)**, hypothèse documentée ; le caractère réel des repères AFT reste à confirmer.
+9. Effectif des professions libérales (CNAVPL) et salaires de la fonction publique hospitalière par âge. **Tranché le 25/11/2026 (D9, D10, D11)** : contrôle CNAVPL sans changement de $\pi$, proxy de salaire à 62-64 ans, grille en escalier propre à chaque catégorie.

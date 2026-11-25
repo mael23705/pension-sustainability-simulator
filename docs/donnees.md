@@ -167,12 +167,44 @@ Une fiche par jeu de données. Les fichiers bruts sont dans `data/raw/` (jamais 
 | Taux de chômage 50 ans ou plus | 4,9 | 5,0 | 5,0 |
 | Taux de chômage, ensemble | 7,6 | 7,8 | 7,7 |
 
+### Taux d'emploi par âge individuel (enquête Emploi 2025, ajouté le 25/11/2026)
+
+| Champ | Contenu |
+|---|---|
+| Nom et organisme | Insee, enquête Emploi, fichier annuel détaillé `DD_EEC_ANNUEL_2025_CSV_FR.zip` (données et métadonnées) |
+| Date de téléchargement | 25/11/2026 (page, licence et date de publication à relever) |
+| Millésime | 2025 |
+| Champ | Non indiqué dans les métadonnées du fichier : à confirmer (la fiche 6 plus haut retient France hors Mayotte pour la série longue) |
+| Mesures utilisées | `POP` (population, milliers), `PT_EMPSTA_IN_POP` (part du statut d'emploi dans la population totale, par âge), `EMPRATE` (taux d'emploi, seulement par tranches de 5 ans) |
+
+**Méthode.** Le fichier ne donne le taux d'emploi que par tranches de 5 ans. La mesure `PT_EMPSTA_IN_POP` existe par âge individuel, mais elle est rapportée à la population des **deux sexes**. Le taux par sexe $s$ et âge $a$ s'obtient donc par :
+
+$e^{\text{obs}}_{s,a} = \dfrac{\text{PT\_EMPSTA\_IN\_POP}_{s,a}}{\text{POP}_{s,a} / \text{POP}_{\text{ensemble},a}}$
+
+Table dérivée : `data/processed/taux-emploi-age-sexe-2025.csv` (non versionnée ; colonnes `age`, `sexe`, `taux_emploi_pct`, `population_milliers`, `part_emploi_dans_pop_totale_pct`).
+
+**Contrôle (25/11/2026).** En pondérant les taux individuels par la population, on retrouve les taux officiels `EMPRATE` des tranches de 5 ans à 0,1 point près : 50-54 ans (F 81,1 ; H 86,7), 55-59 ans (F 76,4 ; H 81,3), 60-64 ans (F 43,4 ; H 45,4) ; 25-29 ans : F 75,0 et H 79,8 contre 79,7 publié. Les taux de 15-64 ans du fichier (F 66,7 ; H 71,9 ; ensemble 69,3) sont identiques à ceux de la série longue plus haut.
+
+**Valeurs autour de l'âge de départ (taux d'emploi, % de la population totale de l'âge, 2025).**
+
+| Âge | 55 | 56 | 57 | 58 | 59 | 60 | 61 | 62 | 63 | 64 |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Femmes | 80,0 | 79,2 | 75,9 | 73,1 | 74,3 | 66,0 | 58,8 | 44,0 | 27,4 | 21,1 |
+| Hommes | 85,1 | 83,5 | 82,8 | 81,4 | 73,5 | 68,2 | 58,6 | 43,2 | 30,4 | 23,8 |
+
+Au-delà de 64 ans, seules des tranches existent (femmes ; hommes) : 65-69 ans (9,4 % ; 12,2 %), 70-74 ans (2,8 % ; 4,2 %), 75 ans ou plus (0,5 % ; 1,2 %).
+
+**Limites.**
+- Les taux par âge individuel sont des estimations d'enquête, donc bruitées. La part d'emploi est arrondie au dixième : l'erreur de conversion est d'environ 0,2 point.
+- Ce sont des taux sur la **population totale** de l'âge, pas conditionnels aux non-retraités : la conversion $e = e^{\text{obs}}/(1-\rho)$ reste à faire avec $\rho$ (fiche 10).
+- **Concept d'emploi décidé le 25/11/2026 (D6)** : comptabilité nationale pour le niveau (30,6 millions, COR) ; ces taux par âge fournissent le profil, mis à l'échelle par un facteur unique (environ 1,04) à calculer en phase 3.
+
 ### Limites et points à traiter
 
-- **Tranches d'âge trop larges** : trois tranches pour un modèle par âge. La tranche 50-64 ans mélange les actifs de 50 à 61 ans et la zone de départ à la retraite (62 à 64 ans), précisément celle où $e$ varie le plus. Il faut une série par âge détaillé (âges quinquennaux ou individuels) pour calibrer $e_{c,a,s}$ ; ce fichier ne suffit qu'à contrôler les ordres de grandeur.
-- **Les 65 ans ou plus** ne sont pas détaillés : l'emploi à 65 ans et plus se déduit par différence (15 ans ou plus moins 15-64 ans : 269 000 femmes et 327 000 hommes en 2025).
+- **Tranches d'âge trop larges** : trois tranches pour un modèle par âge. La tranche 50-64 ans mélange les actifs de 50 à 61 ans et la zone de départ à la retraite (62 à 64 ans), précisément celle où $e$ varie le plus. Il faut une série par âge détaillé (âges quinquennaux ou individuels) pour calibrer $e_{c,a,s}$ ; ce fichier ne suffit qu'à contrôler les ordres de grandeur. **Levé pour 15-64 ans le 25/11/2026** par le fichier annuel détaillé (voir la sous-section ci-dessus).
+- **Les 65 ans ou plus** ne sont pas détaillés : l'emploi à 65 ans et plus se déduit par différence (15 ans ou plus moins 15-64 ans : 269 000 femmes et 327 000 hommes en 2025). Le fichier annuel détaillé de 2025 donne les tranches 65-69, 70-74 et 75 ans ou plus (voir ci-dessus).
 - **Taux d'emploi sur la population totale de la tranche** : le modèle utilise un taux conditionnel aux non-retraités, $e = e^{\text{obs}}/(1-\rho)$ ; la part de retraités par âge vient de la fiche 10.
-- **Emploi du COR et emploi de l'enquête Emploi** : 29,4 millions (enquête, logement ordinaire, 2025) contre 30,6 millions (COR, comptabilité nationale, 2025). Les concepts diffèrent ; l'écart de 1,2 million (4 %) n'est pas expliqué ici. Choisir un seul concept pour la calibration des cotisants.
+- **Emploi du COR et emploi de l'enquête Emploi** : 29,4 millions (enquête, logement ordinaire, 2025) contre 30,6 millions (COR, comptabilité nationale, 2025). Les concepts diffèrent ; l'écart de 1,2 million (4 %) n'est pas expliqué ici. **Décision D6 (25/11/2026) : comptabilité nationale** pour le niveau, enquête Emploi pour le profil par âge.
 - **Emploi n'est pas cotisation** : l'enquête compte les personnes en emploi, alors que les cotisants des fiches 7 incluent des situations (chômeurs indemnisés, stagiaires) et excluent certaines personnes en emploi (par exemple des régimes non couverts).
 - **Chômage** : 7,7 % en 2025, contre 7,0 % pour la cible du COR à partir de 2040 et 7,9 % prévus par le Consensus pour 2026.
 
@@ -251,6 +283,7 @@ URL (communiquées par Maël ; licence non précisée sur les pages consultées)
 - **Ordre de grandeur, non retenu à ce stade** : public ≈ 5,85 millions (19 % de 30,6) ; indépendants ≈ 3,3 millions (SSI + non-salariés agricoles, hors professions libérales, dont l'effectif n'est pas dans les fichiers) soit environ 11 % ; privé par solde ≈ 21,5 millions (environ 70 %), borne haute. Ces parts sont à utiliser seulement comme repère pour les $\pi_c$, la règle d'attribution restant à décider.
 - **Indépendants, source complémentaire (Insee Références, « Emploi et revenus des indépendants », édition 2025, base Non-salariés 2022)** : 4,4 millions d'indépendants fin 2022, dont 4,0 millions de non-salariés (3,6 millions hors agriculture, 0,4 million dans l'agriculture) et 0,3 million d'assimilés salariés (cotisant au régime général). Parmi les 3,6 millions hors agriculture : 1,77 million de micro-entrepreneurs (49 %) et 1,297 million de professions libérales. Champ : France hors Mayotte, activité non salariée à titre principal ou en complément d'une activité salariée (**pluriactifs inclus** : 31 % des micro-entrepreneurs et 9 % des non-salariés classiques cumulent avec un emploi salarié). Le chiffre est supérieur à celui de la MSA (SSI + non-salariés agricoles : 3,29 millions en 2024) ; l'écart d'environ 0,7 million correspond peut-être aux professions libérales (hypothèse non vérifiée). **Part des indépendants dans l'emploi : de 11 % (MSA) à 13 % (4,0 sur 30,6 millions, Insee)** selon la source, avec un risque de double comptage des pluriactifs.
 - **Manquants** : l'effectif des professions libérales affiliées à la CNAVPL (non fourni) et l'année la plus récente (2022 pour les indépendants).
+- **CNAVPL, effectif trouvé le 25/11/2026** : la fiche du COR « Les régimes de retraite des professions libérales » (projections de juin 2024, source CNAVPL) indique que les cotisants au régime de base sont passés de 625 000 en 2010 à 992 000 en 2023. La hausse vient surtout de l'affiliation à la CIPAV de micro-entrepreneurs ; la grande majorité d'entre eux relève désormais de la SSI, donc l'effectif devrait diminuer. Ce 992 000 est un effectif de cotisants à un régime : il n'est pas comparable au 1,297 million de professions libérales de l'Insee (autre champ et autre définition) et ne doit pas être additionné avec lui. **La règle d'attribution aux trois catégories reste à décider.**
 
 ---
 
@@ -306,6 +339,25 @@ FPH (ensemble) : 2 896 net (femmes 2 757, hommes 3 407) d'après la DGAFP ; pas 
 | 60 ans ou plus | 3 657 (10 %) | 2 488 (12 %) |
 
 Contrôle : la moyenne pondérée des tranches retrouve 3 022 € pour la FPE (publié : 3 018) et 2 318 € pour la FPT après renormalisation des parts (publié : 2 317).
+
+### Compléments du 25/11/2026 : brut/net du privé et fonction publique hospitalière
+
+**Rapport brut/net du privé.** Insee Première n° 2079 (octobre 2025, `insee.fr/fr/statistiques/8657156`) : en 2024, le salaire moyen en équivalent temps plein du privé est de **3 602 euros brut** et **2 733 euros net** par mois (même champ que le net de la fiche : France, privé hors agriculture et particuliers employeurs, alternants et stagiaires inclus). Le rapport brut/net vaut donc **1,318** (calcul : 3 602 / 2 733). Une édition plus récente existe (Insee Première n° 2132, données 2025 : 2 797 euros net en moyenne) : à examiner, car la calibration porte sur 2026 ; elle n'est pas retenue ici.
+
+**Fonction publique hospitalière (FPH).** Insee Première n° 2102 (mai 2026, Insee et DREES, source Siasp), données `IP2102.xlsx` et PDF `ip2102.pdf` téléchargés le 25/11/2026. Salaire net moyen en équivalent temps plein, 2024 : **2 896 euros** par mois pour l'ensemble de la FPH (fonctionnaires : 3 314 euros brut et 2 691 euros net).
+
+| Âge (figure 4, FPH, 2024) | Moins de 30 ans | 30-39 ans | 40-49 ans | 50-59 ans | 60 ans ou plus | Ensemble |
+|---|---:|---:|---:|---:|---:|---:|
+| Salaire net moyen (euros) | 2 274 | 2 851 | 2 925 | 2 994 | 3 789 | 2 896 |
+| Part des effectifs en EQTP (%) | 14 | 25 | 26 | 27 | 7 | 100 |
+
+Contrôle : le rapport brut/net des fonctionnaires de la FPH (3 314 / 2 691 = 1,2315, calcul) est cohérent avec le rapport de 1,23 retenu pour le public.
+
+**Limites.**
+- La FPH est donnée par âge **sans croisement avec le sexe** (le fichier donne le sexe séparément : 2 757 euros pour les femmes et 3 407 pour les hommes, tous âges, médecins inclus).
+- La tranche « 60 ans ou plus » (7 % des effectifs) inclut les personnels médicaux : elle est tirée vers le haut et ne représente pas le salaire à l'âge de départ.
+- La grille d'âge de la FPH (moins de 30, 30-39, 40-49, 50-59, 60 ou plus) diffère de celles du privé, du public d'État et territorial et des indépendants : **la grille commune reste à définir**.
+- **Aucune source trouvée ne donne le salaire à 62-64 ans** (privé : tranche « 55 ans ou plus » ; public et FPH : « 60 ans ou plus »). Une hypothèse documentée sera nécessaire ; elle n'est pas décidée.
 
 ### Limites et points à traiter
 
@@ -370,15 +422,40 @@ Par tranche d'âge (ensemble des non-salariés hors agriculture) : moins de 30 a
 
 ### Limites et points à traiter
 
-- **Dernière année disponible : 2024**, alors que la calibration porte sur **2026**. Décision à prendre : faire avancer le stock de 2024 à 2026 (revalorisations des pensions, décès, nouvelles liquidations) ou fixer l'année de calibration à 2024. Les taux de revalorisation de 2025 et 2026 sont à relever à la source (non vérifiés).
+- **Dernière année disponible : 2024**, alors que la calibration porte sur **2026**. Décision à prendre : faire avancer le stock de 2024 à 2026 (revalorisations des pensions, décès, nouvelles liquidations) ou fixer l'année de calibration à 2024. Les taux de revalorisation de 2025 et 2026 sont à relever à la source (non vérifiés). **Taux de 2025 relevé le 25/11/2026 : +2,2 %** (voir « Compléments du 25/11/2026 » plus bas).
 - **Définition de `m1` (documentation EACR, table A)** : avantage principal moyen de **droit direct**, perçu en **décembre** (ni effectifs ni montants ne sont des moyennes annuelles ; effectifs × `m1` × 12 ne retrouve donc pas exactement les dépenses de l'année). Il **comprend** les minima de pension (minimum contributif, minimum garanti) ; il **exclut** le droit dérivé (`m2`), la majoration pour trois enfants, la majoration pour tierce personne, le minimum vieillesse et l'ASI. La variable `mont` inclut ces éléments. Les données portent seulement sur les prestations versées en rente (pas de versement forfaitaire unique). Ce qui reste à confirmer : si la ligne « Tous régimes » somme bien base et complémentaire pour un même retraité (elle provient du modèle Ancetre).
 - **Conséquence pour $\theta_c$** : `m1` exclut la majoration pour trois enfants, ce qui sous-estime la pension effectivement versée ; la comparaison avec les taux de remplacement des cas types du COR (qui incluent pensions de base et complémentaires) doit en tenir compte.
 - **Brut ou net** : la documentation ne le dit pas explicitement pour `m1`. Elle traite les prélèvements sociaux (CSG, CRDS, Casa, cotisation maladie) dans une table distincte (`A-Prelev_sociaux`), ce qui laisse penser que `m1` est **avant prélèvements** (donc brut), mais ce n'est pas confirmé. À vérifier auprès de la Drees ou dans la fiche 23 du panorama « Les retraités et les retraites » avant tout rapprochement avec les salaires nets des fiches 8.
 - **Âge moyen de liquidation (`ageliq`)** : défini dans la table C comme l'âge moyen de liquidation, mais vide pour « Tous régimes ». On utilise la distribution des liquidants par âge (colonne `Age`, âge en fin d'année) ou l'âge conjoncturel de départ par régime. Attention : `Age` est l'âge en fin d'année, pas l'âge à la liquidation.
 - **Écart de 123 445 personnes** (0,7 %) entre la somme des âges individuels (17 174 800) et la ligne « Ensemble » : non expliqué par la documentation. **Hypothèses non vérifiées** : (i) la ligne « Tous régimes » provient du modèle Ancetre et la table A est actualisée l'année suivante (principe de « double interrogation », variable `PlusRécent`) alors que la table C n'est cohérente avec la table A que pour la même édition ; (ii) la ligne « plus de 95 » ou des cellules masquées. À tester : comparer `PlusRécent` et recalculer la somme sans la ligne « plus de 95 ».
 - **Âges extrêmes et aberrants** : des liquidants apparaissent à partir de 22 ans (anciens invalides de la fonction publique) ; la classe 100+ du cahier doit être construite en agrégeant les âges 100 à 109.
-- **Revalorisations** : +0,9 % au 1er janvier 2026 pour les retraites de base (COR, juin 2026, partie 1, chapitre 2 ; LFSS 2026). Pour 2025, le taux n'apparaît pas dans les documents fournis : à relever à la source. Pour l'Agirc-Arrco, la valeur de service du point n'a **pas été revalorisée en 2025** (pas d'accord entre partenaires sociaux) ; en 2026 elle suit l'inflation hors tabac moins 0,4 point.
+- **Revalorisations** : +0,9 % au 1er janvier 2026 pour les retraites de base (COR, juin 2026, partie 1, chapitre 2 ; LFSS 2026). Pour 2025, le taux n'apparaît pas dans les documents fournis : à relever à la source. Pour l'Agirc-Arrco, la valeur de service du point n'a **pas été revalorisée en 2025** (pas d'accord entre partenaires sociaux) ; en 2026 elle suit l'inflation hors tabac moins 0,4 point. **Mise à jour du 25/11/2026 : le taux de 2025 est relevé (+2,2 %, coefficient 1,022)** ; voir « Compléments du 25/11/2026 » plus bas.
 - **Cas types du COR** : récupérés (tableau ci-dessous). Ils servent de contrôle de $\theta_c$, avec les réserves indiquées.
+
+### Compléments du 25/11/2026 : revalorisation 2025 et panorama DREES 2026
+
+**Revalorisation 2025 relevée.** Les pensions de retraite de base ont été revalorisées d'un coefficient de **1,022 au 1er janvier 2025, soit +2,2 %** (instruction interministérielle DSS/SD3A/DB/2024/176 du 13 décembre 2024, publiée sur `legislation.lassuranceretraite.fr`). Le Panorama DREES (édition 2025, fiche 4) confirme le taux de 2,2 % au 1er janvier 2025. Avec +0,9 % au 1er janvier 2026 (COR), le facteur indicatif pour faire avancer une pension de base de décembre 2024 à 2026 est 1,022 × 1,009 ≈ **1,031** (calcul). Il ne vaut que pour les pensions de base : la complémentaire Agirc-Arrco suit d'autres règles (non revalorisée en 2025, voir plus haut). L'inflation moyenne de 2025 est de +0,9 % (Insee Première n° 2132) : en euros constants, les pensions de base ont donc gagné environ 1,3 point en 2025 (1,022 / 1,009, calcul).
+
+**Panorama DREES « Les retraités et les retraites », édition 2026 (PDF de 314 pages, téléchargé le 25/11/2026).**
+- Pension moyenne de droit direct, fin 2024, retraités résidant en France : **1 752 euros brut** et **1 626 euros** après prélèvements sociaux par mois (rapport net/brut d'environ 0,93, calcul). **Cette pension est l'avantage principal de droit direct y compris la majoration pour trois enfants ou plus** (source : EIR et modèle ANCETRE). Elle n'est donc pas comparable au `m1` de l'EACR (1 646,9 euros), qui exclut la majoration d'après la documentation EACR.
+- **Part de retraités par âge** (fiche 15 : proportion de personnes retraitées de droit direct parmi les personnes de cet âge résidant en France), fin 2024 : **9 % à 60 ans** (génération 1964), **19 % à 61 ans** (génération 1963), **48 % à 62 ans** (génération 1962). La série complète par âge de 50 à 70 ans est au graphique 3 de la fiche 15 ; seuls ces trois points sont relevés dans le texte. C'est la définition utile pour $\rho$.
+
+**Panorama DREES 2026 : tableaux 3 et 4 (fin 2024, régime principal), utilisés comme contrôle (D14, ajouté le 25/11/2026).**
+
+| Régime principal | Effectif (milliers) | Part | Pension brute mensuelle moyenne (euros, avec majoration, tous retraités de droit direct) |
+|---|---|---|---|
+| Régime général (inclut l'ex-SSI depuis 2020) | 12 130 | 70 % | 1 610 |
+| FPE civils | 1 560 | 9 % | 2 570 |
+| FPE militaires | 350 | 2 % | 2 260 |
+| CNRACL | 1 110 | 6 % | 1 860 |
+| Régimes spéciaux | 480 | 3 % | 2 740 |
+| MSA salariés | 500 | 3 % | 1 720 |
+| Autre régime de non-salarié | 820 | 5 % | 1 420 |
+| Ensemble des retraités de droit direct | 17 300 | 100 % | 1 750 |
+
+- Public (FPE civils, FPE militaires, CNRACL, régimes spéciaux) : 3 500 milliers sur 17 300, soit 20,2 % (calcul), proche de $\pi_{\text{public}} = 0{,}19$ (D2).
+- Les effectifs de ce tableau sont arrondis aux dizaines de milliers et peuvent varier d'une année à l'autre (note du panorama).
+- Ordre des pensions : public supérieur au régime général, lui-même supérieur aux non-salariés. Ce classement sert de contrôle de signe pour $\theta_c$ en phase 3.
 
 ### Taux de remplacement des cas types du COR (juin 2026)
 
@@ -471,17 +548,18 @@ La montée en charge de la réforme de 2023 est suspendue pour la génération 1
 - **Croissance réelle des salaires** : le repère du COR est 0,7 % par an à long terme. Toute valeur provisoire nettement supérieure (par exemple 2 %) devra être justifiée ou remplacée.
 - **Rendement des réserves (repère de marché, source secondaire)** : le fichier fourni est un guide pédagogique grand public (« Les bons du Trésor », vérifié le 7 novembre 2026, auteur et URL à identifier) qui reprend les communiqués de l'Agence France Trésor. **À recouper avec les communiqués de l'AFT avant tout usage dans `config/assumptions.yaml`.** Taux nominaux moyens pondérés des adjudications : BTF à 12 mois 3,352 % (2 novembre 2026) ; OAT 2,40 % septembre 2029 : 3,59 % (17 septembre) ; OAT 3,70 % novembre 2036 (environ 10 ans) : 4,74 % (5 novembre). Taux de la facilité de dépôt de la BCE : 2,50 % depuis le 16 septembre 2026.
 - **Passage au réel (calcul indicatif, non sourcé)** : 4,74 % moins une inflation de 1,6 % à 2,0 % (fourchette du COR et du Consensus pour 2026-2027) donne environ **2,7 % à 3,1 % réel** pour l'OAT à 10 ans. Ce n'est pas le rendement d'un portefeuille de réserves (qui comporterait des actifs risqués) ni un rendement garanti, et le taux à 10 ans de 2026 ne dit rien du rendement moyen sur 40 ans. Un taux réel direct (OAT indexées) n'est pas dans le fichier fourni.
+- **Rendements des obligations indexées (AFT, adjudications du 15/10/2026, relevés le 25/11/2026)** : taux moyen pondéré de **1,83 %** pour l'OAT€i 3,15 % 25/07/2032, de **2,71 %** pour l'OAT€i 1,80 % 25/07/2040 et de **2,87 %** pour l'OATi 0,55 % 01/03/2039 (page « Dernières adjudications », `aft.gouv.fr`). Ces titres sont indexés sur l'inflation : le taux est très probablement réel, mais la page ne le précise pas. **À confirmer dans la documentation de l'AFT avant tout usage.** Ce sont des rendements ponctuels à 6-14 ans d'échéance, ni un rendement moyen sur 40 ans ni celui d'un portefeuille de réserves. Les PDF « récapitulatif mensuel des opérations » de l'AFT ne contiennent pas de colonne de rendement exploitable. **Repère seulement : aucune valeur n'est reprise comme valeur retenue** dans `config/assumptions.yaml`.
 - **Taux de cotisation** : non recherchés. Le taux $\tau_0$ est calibré par construction et ne dépend donc pas d'une donnée externe, mais une valeur de contrôle serait utile.
 
 ---
 
 ## Fiches restantes (phase 1)
 
-- [~] Fiche 6 : rédigée à partir de trois tranches d'âge seulement. À compléter : emploi par âge quinquennal ou individuel (Insee, enquête Emploi, séries détaillées).
-- [~] Fiche 7 : cotisants par catégorie, ordre de grandeur obtenu (public 19 %, indépendants 11 à 13 %, privé par solde). Manquant : CNAVPL ; règle d'attribution à décider.
-- [~] Fiche 8 : privé, public (FPE, FPT) et indépendants (2022) renseignés. Manquants : FPH par âge (Insee Première n° 2102) ; grille d'âge commune.
+- [x] Fiche 6 : taux d'emploi par âge individuel obtenu (15-64 ans ; tranches au-delà) ; concept d'emploi décidé le 25/11/2026 (comptabilité nationale, D6). Reste le champ géographique du fichier détaillé à confirmer et le facteur d'échelle à calculer en phase 3.
+- [~] Fiche 7 : cotisants par catégorie, ordre de grandeur obtenu (public 19 %, indépendants 11 à 13 %, privé par solde). Règle d'attribution tranchée le 25/11/2026 (D11) : $\pi$ inchangé, CNAVPL en contrôle. Stock de retraités par catégorie : règle D14, contrôle sur le tableau 3 du panorama.
+- [~] Fiche 8 : privé, public (FPE, FPT, FPH par âge sans sexe) et indépendants (2022) renseignés ; brut/net du privé relevé (1,318). Tranché le 25/11/2026 : salaire à 62-64 ans par proxy (D9), grille en escalier par catégorie (D10). Reste à écrire, par catégorie, la moyenne par sexe utilisée pour D10.
 - [x] Fiche 9 : âge légal et durée par génération (article d'indexation à relire sur Légifrance).
-- [~] Fiche 10 : revalorisation 2025 des pensions de base ; brut ou net de `m1` ; écart de 123 445 personnes.
-- [~] Fiche 11 : repères COR renseignés ; taux de marché de source secondaire à recouper avec l'AFT.
+- [~] Fiche 10 : revalorisation 2025 relevée (+2,2 %). Tranché le 25/11/2026 : `m1` traité comme brut (D7), stock avancé à 2026 (D8), écart de 123 445 non corrigé (D13). Reste à relire la définition de `m1` dans la documentation EACR si elle devient disponible.
+- [~] Fiche 11 : repères COR renseignés ; rendements des obligations indexées de l'AFT relevés le 25/11/2026 (réel à confirmer). Valeur centrale du rendement réel posée le 25/11/2026 : 1,0 %, plage de −1 % à +3 % (D12).
 
 Légende : [x] complète, [~] utilisable avec les réserves indiquées, [ ] non commencée.

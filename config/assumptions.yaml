@@ -49,6 +49,8 @@ demography:
   initial_population_shares:
     status: documented_hypothesis
     rule: equal_to_pi_all_ages_above_a0
+    retiree_stock_rule: "parts pi_c ; polypensionnés rattachés au régime principal (décision D14)"
+    retired_check_drees_2024: {public: 0.202, general_regime: 0.701, non_salaried_other: 0.047, source: "Panorama DREES 2026, tableau 3 (calculs sur 17 300 milliers)"}
   # Sources de données : fiches 1 à 5 de docs/donnees.md (fichiers dans data/raw/, git-ignorés).
 
 retirement:
@@ -94,6 +96,12 @@ retirement:
     test_range_years: [-1, 1]
     constant_over_horizon: true
 
+  retired_share_observed_2024:
+    status: observed
+    source: "DREES, Les retraités et les retraites, édition 2026, fiche 15 (taux de retraités à un âge donné, résidant en France, fin 2024)"
+    value: {60: 0.09, 61: 0.19, 62: 0.48}   # points relevés dans le texte ; série complète : graphique 3 de la fiche 15
+    note: "Générations 1964, 1963 et 1962 ; ne reflète pas la suspension de la réforme de 2023 (liquidations à compter du 01/09/2026, fiche 9)"
+
 pensions:
   theta_replacement_rate:
     status: calibrated
@@ -108,13 +116,20 @@ pensions:
     status: observed
     rule: prices
     base_pension_revaluation_2026: {value: 0.009, source: "COR RA juin 2026 (LFSS 2026)"}
-    base_pension_revaluation_2025: {value: null}   # à relever à la source
+    stock_advance_factor_2024_to_2026: {value: 1.0312, test_range: [1.000, 1.0312], status: documented_hypothesis, source: "1,022 x 1,009 (décision D8) ; borne haute : base seulement"}
+    m1_treated_as: {value: gross, status: documented_hypothesis, source: "décision D7"}
+    base_pension_revaluation_2025: {value: 0.022, status: observed, source: "Instruction interministérielle DSS/SD3A/DB/2024/176 du 13/12/2024 (coefficient 1,022)"}
 
 employment:
   observed_employment_rate:
     status: observed
-    source: "Insee, enquêtes Emploi (fiche 6)"
-    value: null                 # taux par âge et sexe à charger depuis data/raw/
+    source: "Insee, enquête Emploi 2025, fichier DD_EEC_ANNUEL_2025 (fiche 6)"
+    year: 2025
+    derived_table: data/processed/taux-emploi-age-sexe-2025.csv   # non versionné ; reconstruit depuis data/raw/DD_EEC_ANNUEL_2025_CSV_FR.zip (méthode : fiche 6)
+    concept: national_accounts  # décision D6 (Maël, 25/11/2026) : niveau = comptabilité nationale (COR, 30,6 millions en 2025)
+    profile_source: enquete_emploi_2025   # profil par âge et sexe, mis à l'échelle par un facteur unique
+    scale_factor: {value: null, test_range: [1.00, 1.04], status: calibrated}   # 30,6 / 29,4 environ ; à calculer en phase 3
+    value: null                 # chargement dans le moteur : phase 3
   conditional_rate_rule: "e = e_obs / (1 - rho) ; jamais plafonné ; violation => échec du test"
 
 wages:
@@ -122,6 +137,7 @@ wages:
   source: "Fiche 8 : BTS (privé), Insee Première 2100 et 2101 (public), Insee Références 2025 (indépendants)"
   value: null
   gross_to_net_public: {value: 1.23, status: observed, source: "Insee Première 2100, 2101 (rapport brut/net)"}
+  gross_to_net_private: {value: 1.318, status: observed, source: "Insee Première 2079 : 3 602 euros brut / 2 733 euros net par mois en 2024 (rapport calculé)"}
   contribution_base: {value: total_payroll_no_cap, status: convention}
 
 macro:
@@ -147,14 +163,21 @@ finance:
   initial_reserve_k:
     status: convention
     reference: 0                # k = 0 : cas limite analytique
-    test_range: [0, 3]          # plage à justifier avec des réserves de régimes réels
+    test_range: [0, 3]          # provisoire (D15) ; justification avec des réserves réelles reportée en phase 5
     definition: "R_2026 = k x B_2026"
   external_funding_F:
     value: 0
     status: convention
   real_return_on_reserves:
     status: documented_hypothesis
-    value: null                 # à sourcer (Agence France Trésor) ; repère indicatif dans la fiche 11
+    value: 0.01                 # décision D12 : valeur centrale 1,0 % par an en réel (hypothèse documentée)
+    test_range: [-0.01, 0.03]
+    market_reference:           # repères de marché, PAS une valeur retenue ; taux réel à confirmer dans la documentation AFT
+      date: "2026-10-15"
+      source: "AFT, adjudications du 15/10/2026, taux moyen pondéré (page Dernières adjudications)"
+      oat_ei_2032: 0.0183
+      oat_ei_2040: 0.0271
+      oati_2039: 0.0287
   real_discount_rate:
     status: documented_hypothesis
     value: null                 # à définir en phase 4
