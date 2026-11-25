@@ -2,7 +2,7 @@
 
 Simulateur Python de la soutenabilité financière d'un régime de retraite par répartition, sur 40 ans (2026-2065), avec incertitude Monte-Carlo.
 
-**Statut : phase 1 (conception) terminée, phase 2 (moteur démographique) à venir.** Aucun résultat n'est publié à ce stade.
+**Statut : phases 1 (conception) et 2 (moteur démographique) terminées, phase 3 (moteur financier) à venir.** Aucun résultat actuariel n'est publié à ce stade.
 
 ## Problème
 
@@ -48,25 +48,36 @@ Les fichiers bruts (Insee, Drees, COR, DGAFP, MSA) ne sont **pas versionnés** :
 | `config/assumptions.yaml` | Tous les paramètres, avec statut et source ; aucune valeur codée en dur dans le code |
 | `src/` | Code du simulateur (voir [`docs/architecture.md`](docs/architecture.md)) |
 | `tests/` | Tests Pytest |
-| `scripts/` | Téléchargement et préparation des données |
+| `scripts/` | Vérification des fichiers bruts, comparabilité avec l'Insee, reproduction de la projection, graphiques |
 | `notebooks/` | Exploration ; le code utile est déplacé vers `src/` |
 | `data/raw/`, `data/processed/` | Données (ignorées par Git) |
 | `LEARNING.md` | Journal d'apprentissage du projet |
 
-## Installation
+## Installation et tests
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
+pytest
 ```
+
+Les fichiers Insee sont à placer à la main dans `data/raw/` (`python scripts/check_raw_data.py` les vérifie). Sans eux, les tests qui les lisent sont ignorés.
+
+## Phase 2 : moteur démographique
+
+Le moteur projette la population par catégorie, sexe et âge de 2026 à 2066 (calendrier : mortalité, vieillissement, migrations, naissances ; classe ouverte à 100 ans et plus). Alimenté avec les mêmes hypothèses de mortalité, de fécondité et de migration que la projection Insee 2026 (scénario central), il retrouve ses populations à moins de 0,15 % près pour la population totale et 0,5 % pour les groupes d'âge, chaque année, contre des seuils fixés à 1 % et 2 % avant les tests.
+
+![Écart relatif entre le moteur et la projection Insee 2026](docs/figures/ecarts-insee.png)
+
+Cette comparaison contrôle l'**implémentation** : se rapprocher d'une projection construite avec les mêmes hypothèses ne valide pas la capacité à prévoir la démographie. Les conventions de calcul et les écarts connus sont dans [`docs/conventions-moteur.md`](docs/conventions-moteur.md) et [`docs/comparabilite-insee.md`](docs/comparabilite-insee.md).
 
 ## Feuille de route
 
 | Phase | Contenu | État |
 |---|---|---|
 | 1 | Conception : cahier des charges, données, hypothèses, validation | Terminée |
-| 2 | Moteur démographique et tests | À venir |
+| 2 | Moteur démographique et tests | Terminée |
 | 3 | Moteur financier et calibration de 2026 | À venir |
 | 4 | Indicateurs actuariels ; première version publiable | À venir |
 | 5 | Incertitude : Monte-Carlo, critères A et B | À venir |

@@ -14,7 +14,7 @@ Ce document définit, **avant** d'écrire le moteur, ce que « validé » veut d
 À effectuer et à consigner avec la date, **avant** de lancer la comparaison :
 
 1. **Population initiale** : le total de l'onglet 2026 de POP3 est comparé à celui du fichier de projection pour la même date. Valeur attendue : environ 69,082 millions, à vérifier à la lecture et non à reprendre de ce document.
-2. **Champ géographique** : les deux fichiers portent sur la même zone (France hors Mayotte, à confirmer dans les notes des fichiers).
+2. **Champ géographique** : les deux fichiers portent sur la même zone. Confirmé le 25/11/2026 dans les notes des fichiers : « France » à partir de 2014, donc **Mayotte incluse** (et non « hors Mayotte » comme supposé initialement). Voir `docs/comparabilite-insee.md`.
 3. **Convention d'âge** : âge atteint dans l'année ou âge au 1er janvier. La même convention doit s'appliquer aux deux fichiers et au moteur.
 4. **Âges extrêmes** : la projection descend à 105 ans et plus alors que le modèle a une classe ouverte à 100 ans et plus. L'agrégation 100-104 + 105+ vers 100+ est faite explicitement et testée.
 5. **Mortalité** : la table de mortalité du fichier est lue pour les mêmes années que la projection (quotients par âge de 0 à 120).

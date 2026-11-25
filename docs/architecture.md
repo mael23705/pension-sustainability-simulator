@@ -16,18 +16,20 @@ Version préliminaire (fin de phase 1). Elle sert de guide pour les phases 2 à 
 ```
 src/
   config.py              # lecture et validation de assumptions.yaml
-  io/                    # chargement des fichiers de data/raw/ (Insee, Drees, COR)
+  conventions.py         # indices des sexes, unités des fichiers Insee
+  data_io/               # chargement des fichiers de data/raw/ (Insee, Drees, COR)
   demography/            # phase 2
     population.py        # structures de données, population initiale
     categories.py        # attribution des catégories (parts pi_c)
     migration.py         # flux bruts, règle de dépassement
     engine.py            # transition annuelle t -> t+1
+    comparison.py        # projection sur plusieurs années, écarts avec une référence
   economics/             # phase 3
     employment.py        # taux d'emploi conditionnel e
     wages.py             # profils salariaux, assiette A_t
     macro.py             # productivité, chômage, indexation
   actuarial_model/       # phases 3 et 4
-    retirement.py        # âge de départ, part de retraités rho
+    retirement.py        # âge de départ, part de retraités rho (T8 dès la phase 2)
     pensions.py          # stock observé, liquidations theta_c x salaire
     finance.py           # cotisations, déficit, réserves
     calibration.py       # tau_0, k
@@ -90,7 +92,7 @@ Type : `float64` (les effectifs projetés ne sont pas entiers).
 
 | Phase | Modules | Tests (docs/plan-de-validation.md) |
 |---|---|---|
-| 2 | `io`, `config`, `demography` | T1 à T10, T12 ; cas jouet ; reproduction Insee |
+| 2 | `data_io`, `config`, `demography` | T1 à T10, T12 ; cas jouet ; reproduction Insee |
 | 3 | `economics`, `actuarial_model` | T11 ; cas jouet étendu aux flux financiers ; $D_{2026} = 0$ |
 | 4 | `actuarial_model.indicators` | Cohérence des indicateurs |
 | 5 | `scenarios` | Monotonie en $\tau$ ; tirages communs ; précision Monte-Carlo |
@@ -98,11 +100,13 @@ Type : `float64` (les effectifs projetés ne sont pas entiers).
 ## 7. Outils
 
 - Python avec environnement virtuel ; dépendances dans `requirements.txt`.
-- Tests : `pytest` avec `pythonpath = src` dans un fichier `pytest.ini` à créer en phase 2.
-- Intégration continue : GitHub Actions, un workflow qui installe les dépendances et lance `pytest` à chaque push (phase 2).
+- Tests : `pytest` avec `pythonpath = src` dans `pytest.ini` (en place depuis la phase 2).
+- Intégration continue : GitHub Actions (`.github/workflows/tests.yml`) installe les dépendances et lance `pytest` à chaque push. Les tests qui lisent `data/raw/` sont ignorés (« skipped ») hors de la machine locale.
 
 ## 8. Journal des modifications
 
 | Date | Modification | Raison |
 |---|---|---|
 | 25/11/2026 | Version préliminaire | Fin de la phase 1 |
+| 25/11/2026 | `io/` devient `data_io/` ; ajout de `conventions.py` et `demography/comparison.py` | Un paquet `io` masque le module standard `io` de Python ; besoin de conventions d'indexation partagées et d'une projection multi-années réutilisable |
+| 25/11/2026 | Conventions du moteur (migration de l'âge 0, naissances, classe ouverte) | Voir `docs/conventions-moteur.md` |
