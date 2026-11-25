@@ -20,8 +20,17 @@ simulation:
   alpha_levels: {value: [0.80, 0.90, 0.95], status: convention}
   wilson_confidence: {value: 0.95, status: convention}
 
+data_files:   # noms de fichiers et onglets (data/raw/ est ignoré par Git)
+  raw_dir: {value: data/raw, status: convention}
+  insee_population_file: {value: 3_Pop1janv_age.xlsx, status: observed}      # fiche 1
+  insee_projection_file: {value: 00_central.xlsx, status: observed}          # fiches 2 à 5
+  insee_population_sheet: {value: "2026", status: observed}
+  insee_population_scope: {value: France, status: observed}   # France entière (Mayotte incluse depuis 2014)
+
 demography:
   open_class_age: {value: 100, status: convention}   # classe ouverte 100 ans et plus
+  migration_overflow_policy: {value: raise, status: convention}   # raise | log_only (docs/conventions-moteur.md)
+  insee_adjustment_included: {value: true, status: documented_hypothesis}   # onglets « ajustement » ajoutés au solde
   entry_age_a0:
     value: 20
     status: convention                 # décision D1 (docs/hypotheses.md)
@@ -156,6 +165,30 @@ tests:
   insee_age_group_max_relative_error: {value: 0.02, status: convention}
   insee_age_groups: {value: [[0, 19], [20, 59], [60, 120]], status: convention}
 
-toy_example:   # cas jouet à trois classes d'âge : valeurs de test uniquement
+toy_example:   # cas jouet à trois classes d'âge (0, 1, 2+) : valeurs de test uniquement
   status: toy_example
-  note: "Valeurs à définir dans tests/ avec le calcul à la main ; jamais utilisées pour un résultat"
+  note: "Jamais utilisées pour un résultat. Calcul à la main dans tests/test_toy_example.py"
+  open_class_age: 2          # classes d'âge 0, 1, 2 et plus
+  entry_age_a0: 1            # catégories à partir de l'âge 1
+  categories: [prive, public, independants]
+  pi: [0.5, 0.3, 0.2]
+  # Effectifs au 1er janvier de la première année. Sexe : F = femmes, M = hommes.
+  initial_pre: {F: [100], M: [110]}                       # âge 0
+  initial_by_category:                                    # [âge 1, âge 2 et plus]
+    F: {prive: [50, 20], public: [20, 30], independants: [10, 10]}
+    M: {prive: [30, 10], public: [30, 30], independants: [30, 10]}
+  years:
+    2026:
+      q_birth: {F: 0.10, M: 0.20}
+      q_age: {F: [0.10, 0.20], M: [0.20, 0.25]}           # âges atteints 1 et 2
+      q_open: {F: 0.30, M: 0.40}
+      fertility: [0.0, 0.5, 0.25]                         # par femme d'âge révolu 0, 1, 2+
+      girl_share: 0.5
+      net_migration: {F: [10, -4, 8], M: [-5, 6, -9.75]}  # âges atteints 0, 1, 2+
+    2027:
+      q_birth: {F: 0.10, M: 0.20}
+      q_age: {F: [0.10, 0.20], M: [0.20, 0.25]}
+      q_open: {F: 0.30, M: 0.40}
+      fertility: [0.0, 0.5, 0.25]
+      girl_share: 0.5
+      net_migration: {F: [-10, 0, -14.86], M: [3, 0, 0]}
