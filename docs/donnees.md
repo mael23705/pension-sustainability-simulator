@@ -42,7 +42,7 @@ Une fiche par jeu de données. Les fichiers bruts sont dans `data/raw/` (jamais 
 |---|---|
 | Nom et organisme | Projection de population 2026, France, **scénario central** (fichier `00_central.xlsx`). Insee, Insee Résultats « Projections de population 2026 pour la France » |
 | URL de la page | https://www.insee.fr/fr/statistiques/8991068 |
-| URL du fichier | À compléter : clic droit sur le lien de téléchargement du scénario central, puis « Copier l'adresse du lien » |
+| URL du fichier | Non relevée ; fichier `00_central.xlsx` téléchargé depuis la page ci-dessus |
 | Date de publication | 08/06/2026 |
 | Date de téléchargement | 23/11/2026 (à corriger si le téléchargement a eu lieu un autre jour) |
 | Millésime et champ | Projections de population 2026, horizon 2070. Champ : France (note du fichier : France métropolitaine jusqu'en 1994, France hors Mayotte de 1995 à 2013, France à partir de 2014). Source indiquée : Insee, estimations de population jusqu'en 2023, projections de population 2026 à partir de 2024 |
@@ -137,11 +137,351 @@ Une fiche par jeu de données. Les fichiers bruts sont dans `data/raw/` (jamais 
 
 ---
 
+## Fiche 6 : Emploi et chômage par sexe et tranche d'âge (brouillon)
+
+| Champ | Contenu |
+|---|---|
+| Nom et organisme | Insee, enquêtes Emploi, séries longues sur le marché du travail : `marc-empl-nbr-taux-empl-sexe-age-2.xlsx` (figure 1 : nombre ; figure 2 : taux d'emploi) et `marc-cho-nbr-taux-sexe-age-2.xlsx` (figure 1 : nombre ; figure 2 : taux de chômage) |
+| URL, licence | Site : https://www.insee.fr (rubrique « séries longues sur le marché du travail », enquêtes Emploi) ; page exacte et licence à relever |
+| Date de publication | À compléter (données « révisées », dernière année 2025) |
+| Date de téléchargement | 25/11/2026 (à corriger si besoin) |
+| Millésime et champ | 1975 à 2025 (51 années). Personnes vivant en logement ordinaire, 15 ans ou plus ; chômeurs au sens du BIT ; France (France hors Mayotte pour les taux d'emploi) |
+| Granularité | Sexe (femmes, hommes, ensemble) × trois tranches d'âge : 15-24, 25-49, 50-64 ans (emploi) ; 15-24, 25-49, 50 ans ou plus (chômage) |
+| Version du simulateur | v0.1 : taux d'emploi observé $e^{\text{obs}}$ et repère de chômage |
+
+**Valeurs de contrôle (2025)**
+
+| | Femmes | Hommes | Ensemble |
+|---|---:|---:|---:|
+| Emploi, 15-24 ans (milliers) | 1 245 | 1 502 | 2 748 |
+| Emploi, 25-49 ans | 8 341 | 8 657 | 16 998 |
+| Emploi, 50-64 ans | 4 487 | 4 553 | 9 040 |
+| Emploi, 15-64 ans | 14 074 | 14 713 | 28 786 |
+| Emploi, 15 ans ou plus | 14 343 | 15 040 | 29 383 |
+| Taux d'emploi 15-24 ans (%) | 31,8 | 37,0 | 34,5 |
+| Taux d'emploi 25-49 ans | 79,5 | 86,2 | 82,8 |
+| Taux d'emploi 50-64 ans | 67,1 | 71,5 | 69,2 |
+| Taux d'emploi 15-64 ans | 66,7 | 71,9 | 69,3 |
+| Taux de chômage 15-24 ans (%) | 19,6 | 20,0 | 19,8 |
+| Taux de chômage 25-49 ans | 7,1 | 6,8 | 6,9 |
+| Taux de chômage 50 ans ou plus | 4,9 | 5,0 | 5,0 |
+| Taux de chômage, ensemble | 7,6 | 7,8 | 7,7 |
+
+### Limites et points à traiter
+
+- **Tranches d'âge trop larges** : trois tranches pour un modèle par âge. La tranche 50-64 ans mélange les actifs de 50 à 61 ans et la zone de départ à la retraite (62 à 64 ans), précisément celle où $e$ varie le plus. Il faut une série par âge détaillé (âges quinquennaux ou individuels) pour calibrer $e_{c,a,s}$ ; ce fichier ne suffit qu'à contrôler les ordres de grandeur.
+- **Les 65 ans ou plus** ne sont pas détaillés : l'emploi à 65 ans et plus se déduit par différence (15 ans ou plus moins 15-64 ans : 269 000 femmes et 327 000 hommes en 2025).
+- **Taux d'emploi sur la population totale de la tranche** : le modèle utilise un taux conditionnel aux non-retraités, $e = e^{\text{obs}}/(1-\rho)$ ; la part de retraités par âge vient de la fiche 10.
+- **Emploi du COR et emploi de l'enquête Emploi** : 29,4 millions (enquête, logement ordinaire, 2025) contre 30,6 millions (COR, comptabilité nationale, 2025). Les concepts diffèrent ; l'écart de 1,2 million (4 %) n'est pas expliqué ici. Choisir un seul concept pour la calibration des cotisants.
+- **Emploi n'est pas cotisation** : l'enquête compte les personnes en emploi, alors que les cotisants des fiches 7 incluent des situations (chômeurs indemnisés, stagiaires) et excluent certaines personnes en emploi (par exemple des régimes non couverts).
+- **Chômage** : 7,7 % en 2025, contre 7,0 % pour la cible du COR à partir de 2040 et 7,9 % prévus par le Consensus pour 2026.
+
+---
+
+## Fiche 7 : Effectifs de retraités et de cotisants (brouillon, partielle)
+
+| Champ | Contenu |
+|---|---|
+| Nom et organisme | Drees, enquête annuelle auprès des caisses de retraite (EACR), enrichie avec le modèle Ancetre : fichier `62_EACR_diffusée_Part_1 - version du 26 mai 2026.xlsx` (onglet `A-Cadrage`) et documentation `DocumentationEACR_mai2026.pdf` (version du 18 mai 2026). Complément : tableau « Cotisants, retraités et rapport démographique tous régimes » (`reve-protec-cotisant-retraite.xlsx`) |
+| URL | Site : https://data.drees.solidarites-sante.gouv.fr (jeux de données de la Drees) ; pages exactes à relever |
+| Date de publication | EACR : 26 mai 2026 (documentation du 18 mai 2026). Tableau cotisants-retraités : à compléter |
+| Date de téléchargement | 25/11/2026 (à corriger si besoin) |
+| Millésime et champ | EACR : 2004 à 2024, stock au 31 décembre. Tableau cotisants-retraités : 2004 à 2023 ; cotisants = emploi intérieur ; retraités ayant perçu un droit direct, résidant en France ou à l'étranger, vivants au 31 décembre |
+| Granularité | EACR : par régime (29 régimes dans `A-Cadrage`, plus la ligne « Tous régimes »), sexe, résidence (Ensemble ou France), type de droit (direct, dérivé). Tableau cotisants-retraités : totaux annuels uniquement |
+| Licence | Licence Ouverte 2.0. Mention à afficher : « Source : Drees, enquête annuelle auprès des caisses de retraite (EACR), enrichie avec le modèle Ancetre » |
+| Format | xlsx (EACR : 24 Mo, 6 onglets ; `A-Cadrage` : 21 210 lignes) |
+| Version du simulateur | v0.1 |
+
+### Contrôles réalisés le 25/11/2026
+
+- **Tous régimes, retraités de droit direct, 2024** : 17 298 245 (résidence « Ensemble »), dont 16 429 118 résidant en France.
+- **Cohérence avec le tableau cotisants-retraités** : 16 712 078 en 2019 et 16 974 753 en 2022 dans l'EACR, contre 16,712 et 16,975 millions dans le tableau ; en 2023, 17 184 263 contre 17,198 millions (écart d'environ 0,08 %).
+- **Rapport démographique tous régimes** : 1,77 en 2023 (30,4236 millions de cotisants pour 17,198 millions de retraités) ; 1,72 en 2019 ; 2,02 en 2004. C'est une cible de contrôle pour la calibration de 2026.
+
+### Limites et points à traiter
+
+- **Double comptage entre régimes** : la somme des retraités de droit direct de tous les régimes vaut 39 789 942 en 2024, soit **2,3 fois** le total dédoublonné. Les polypensionnés sont comptés dans chaque régime. On ne peut donc pas obtenir les effectifs par catégorie en additionnant des régimes ; il faut utiliser la ligne « Tous régimes » pour le total et décider d'une règle d'attribution à une catégorie.
+- **Fusion du régime général et de la SSI en 2020** (code 15) : les salariés du privé et les indépendants ne sont plus séparables pour le régime de base. Seuls les régimes complémentaires (Agirc-Arrco pour les salariés du privé, RCI pour les indépendants) permettent encore de les distinguer, avec des recouvrements.
+- **Cotisants par catégorie : absents de l'EACR** (seul le total est donné). Trois sources complémentaires sont documentées ci-dessous ; elles n'ont ni le même champ ni la même définition, et aucune ne donne directement « privé / public / indépendants ».
+- **Rattachement des régimes aux trois catégories** (proposition à valider, à documenter dans `hypotheses.md`) :
+
+| Catégorie | Régimes (code) |
+|---|---|
+| Privé | Régime général (15), Agirc-Arrco (5600), MSA salariés (21) |
+| Public | SRE civils (12), SRE militaires (13), CNRACL (32), FSPOEIE (33), Ircantec (1000), ERAFP (3000) |
+| Indépendants | RCI (43), CNAVPL (2100, 2200), CNBF (2201, 2202), MSA exploitants (22, 23) |
+| À décider | Régimes spéciaux (SNCF, RATP, CNIEG, ENIM, CANSSM, CRPCEN, Banque de France), Cavimac, Mayotte |
+
+---
+
+### Sources complémentaires pour les cotisants (téléchargées le 25/11/2026)
+
+| Source | Référence | Date | Champ |
+|---|---|---|---|
+| MSA, « Compensation démographique 2024 » | `Compensation-demographique-2024.pdf`, tableau 1 | Synthèse de mars 2026 | Cotisants vieillesse 2024, **France métropolitaine**, par régime ; comprend les chômeurs, stagiaires et apprentis imputés au régime |
+| DGAFP, « Chiffres clés de la fonction publique », édition 2026 | `cc-2026-web.pdf`, tableaux 2 et 6 | 2026 | Emplois principaux au 31/12/2024, **France hors Mayotte**, hors contrats aidés (Siasp, Insee) |
+| COR, Rapport annuel de juin 2026 | `RA_2026_def_1.pdf`, partie 2, chapitre 2 (rapport cotisants/retraités, p. 72-73) | Juin 2026 | Emploi total en comptabilité nationale, tous régimes |
+
+URL (communiquées par Maël ; licence non précisée sur les pages consultées) :
+
+- MSA : https://statistiques.msa.fr/wp-content/uploads/2026/03/Compensation-demographique-2024.pdf
+- DGAFP : https://www.fonction-publique.gouv.fr/files/files/publications/publications-dgafp/cc-2026-web.pdf
+- COR (page du rapport, publié le 11 juin 2026) : https://www.cor-retraites.fr/rapports-du-cor/rapport-annuel-cor-juin-2026-evolutions-perspectives-retraites-france
+
+**Cotisants vieillesse 2024 (MSA, France métropolitaine)**
+
+| Régime | Effectif | Part |
+|---|---:|---:|
+| Régime général | 24 925 614 | 72,7 % |
+| Salariés agricoles (dont 766 966 actifs cotisants) | 815 093 | 2,4 % |
+| Non-salariés agricoles | 412 121 | 1,2 % |
+| Indépendants (SSI) | 2 880 146 | 8,4 % |
+| Régimes spéciaux | 5 257 682 | 15,3 % |
+| **Total** | **34 290 656** | 100 % |
+
+**Fonction publique (DGAFP, 31/12/2024)** : 5 848 300 agents (FPE 2 581 900 dont 312 900 militaires ; FPT 2 017 800 ; FPH 1 248 600). Par statut : 3 745 800 fonctionnaires, 1 407 700 contractuels, 312 900 militaires, 381 900 « autres catégories et statuts ». Âge moyen 44 ans, 15 % ont moins de 30 ans, 38 % ont 50 ans ou plus, 64 % sont des femmes.
+
+**COR** : emploi total de 30,6 millions en 2025 (28,9 millions en 2070) ; retraités de droit direct 17,4 millions en 2025 (22,1 millions en 2070), France et étranger.
+
+**Ce qu'on peut et ne peut pas en tirer**
+
+- Les « régimes spéciaux » de la MSA (5,26 millions) **ne sont pas le secteur public** : ils regroupent la fonction publique d'État et territoriale mais aussi SNCF, RATP, industries électriques et gazières, etc. À l'inverse, les contractuels du public (1,41 million) cotisent au régime général et à l'Ircantec.
+- Le total de la MSA (34,3 millions, métropole, avec chômeurs et stagiaires) dépasse l'emploi du COR (30,6 millions, 2025) : les deux ne sont pas additionnables ni comparables sans retraitement.
+- Les cotisants du régime des indépendants (SSI, 2,88 millions) incluent les micro-entrepreneurs, dont le revenu est souvent faible : un cotisant n'est pas un équivalent temps plein.
+- **Ordre de grandeur, non retenu à ce stade** : public ≈ 5,85 millions (19 % de 30,6) ; indépendants ≈ 3,3 millions (SSI + non-salariés agricoles, hors professions libérales, dont l'effectif n'est pas dans les fichiers) soit environ 11 % ; privé par solde ≈ 21,5 millions (environ 70 %), borne haute. Ces parts sont à utiliser seulement comme repère pour les $\pi_c$, la règle d'attribution restant à décider.
+- **Indépendants, source complémentaire (Insee Références, « Emploi et revenus des indépendants », édition 2025, base Non-salariés 2022)** : 4,4 millions d'indépendants fin 2022, dont 4,0 millions de non-salariés (3,6 millions hors agriculture, 0,4 million dans l'agriculture) et 0,3 million d'assimilés salariés (cotisant au régime général). Parmi les 3,6 millions hors agriculture : 1,77 million de micro-entrepreneurs (49 %) et 1,297 million de professions libérales. Champ : France hors Mayotte, activité non salariée à titre principal ou en complément d'une activité salariée (**pluriactifs inclus** : 31 % des micro-entrepreneurs et 9 % des non-salariés classiques cumulent avec un emploi salarié). Le chiffre est supérieur à celui de la MSA (SSI + non-salariés agricoles : 3,29 millions en 2024) ; l'écart d'environ 0,7 million correspond peut-être aux professions libérales (hypothèse non vérifiée). **Part des indépendants dans l'emploi : de 11 % (MSA) à 13 % (4,0 sur 30,6 millions, Insee)** selon la source, avec un risque de double comptage des pluriactifs.
+- **Manquants** : l'effectif des professions libérales affiliées à la CNAVPL (non fourni) et l'année la plus récente (2022 pour les indépendants).
+
+---
+
+## Fiche 8 : Salaires (brouillon, partielle : privé, fonction publique d'État et territoriale)
+
+| Champ | Contenu |
+|---|---|
+| Nom et organisme | Insee, Base Tous salariés (BTS), « Salaires dans le secteur privé selon le sexe et l'âge » (`TAB_BTS_SEX_AGE_2024.xlsx`, jeu `DS_BTS_SAL_EQTP_SEX_AGE`) et « selon le sexe et la PCS » (`TAB_BTS_SEX_PCS_2024.xlsx`) |
+| URL | Site : https://catalogue-donnees.insee.fr (catalogue Melodi de l'Insee) ; page exacte à relever |
+| Date de publication | Fichiers créés le 30/07/2026 |
+| Date de téléchargement | 25/11/2026 (à corriger si besoin) |
+| Millésime et champ | Années 2023 et 2024. France : salariés du privé, y compris alternants, stagiaires et contrats aidés, **hors agriculture et particuliers employeurs** |
+| Granularité | Salaire **net** mensuel moyen en équivalent temps plein, en euros, par sexe et par tranche d'âge (moins de 25 ans, 25-39, 40-49, 50-54, 55 ans ou plus) ou par PCS (cadres y compris chefs d'entreprise, professions intermédiaires, employés, ouvriers). Onglet utile : `FRANCE` ; les autres onglets sont géographiques (`s` = secret statistique) |
+| Licence | À confirmer sur la page du jeu de données (licence ouverte de l'Insee attendue) |
+| Format | xlsx, 5,0 Mo (PCS) et 5,9 Mo (âge) |
+| Version du simulateur | v0.1 pour la catégorie « privé » |
+
+### Valeurs de contrôle (France, 2024, euros nets par mois)
+
+- Ensemble : 2 733 € ; femmes 2 514 € ; hommes 2 891 €.
+- Par âge (ensemble) : moins de 25 ans 1 622 ; 25-39 ans 2 547 ; 40-49 ans 3 007 ; 50-54 ans 3 174 ; 55 ans ou plus 3 266.
+- Par PCS (ensemble) : cadres 4 629 ; professions intermédiaires 2 633 ; employés 1 941 ; ouvriers 2 051.
+
+### Fonction publique (compléments téléchargés le 25/11/2026)
+
+| Champ | Contenu |
+|---|---|
+| Nom et organisme | Insee Première n° 2100 (FPE) et n° 2101 (FPT), « Les salaires dans la fonction publique … en 2024 » : classeurs `IP2100.xlsx` et `IP2101.xlsx` (onglets « Figure 1 » à « Figure 5 » et « Tableaux complémentaires ») ; DGAFP, Chiffres clés 2026, tableau 16 |
+| URL, licence | Insee Première n° 2100 (FPE) : https://www.insee.fr/fr/statistiques/8986474 ; n° 2101 (FPT) : https://www.insee.fr/fr/statistiques/8984823 (liens communiqués, non ouverts à la dernière vérification : erreur du serveur) ; DGAFP : voir la fiche 7. Licence à compléter |
+| Millésime et champ | 2024 ; salaire mensuel **net** moyen en équivalent temps plein, France hors Mayotte, agents civils (hors militaires, apprentis, internes) ; en euros courants de 2024 |
+| Version du simulateur | v0.1 pour la catégorie « public » |
+
+**Valeurs de contrôle (2024, net mensuel EQTP, euros)**
+
+| | FPE | FPT | Ensemble FP (DGAFP) | Privé (DGAFP) |
+|---|---:|---:|---:|---:|
+| Ensemble | 3 018 | 2 317 | 2 742 | 2 814 |
+| Femmes | 2 870 | 2 248 | 2 638 | 2 585 |
+| Hommes | 3 263 | 2 418 | 2 934 | 2 979 |
+| Brut moyen | 3 736 | 2 851 | 3 382 | n.d. |
+| Rapport brut/net | 1,238 | 1,230 | 1,233 | n.d. |
+
+FPH (ensemble) : 2 896 net (femmes 2 757, hommes 3 407) d'après la DGAFP ; pas de détail par âge (Insee Première n° 2102 non fourni).
+
+**Par tranche d'âge (net mensuel EQTP, part des effectifs en EQTP)**
+
+| Âge | FPE | FPT |
+|---|---:|---:|
+| Moins de 30 ans | 2 138 (11 %) | 1 930 (9 %) |
+| 30 à 39 ans | 2 606 (19 %) | 2 153 (18 %) |
+| 40 à 49 ans | 3 033 (29 %) | 2 380 (26 %) |
+| 50 à 59 ans | 3 375 (31 %) | 2 401 (34 %) |
+| 60 ans ou plus | 3 657 (10 %) | 2 488 (12 %) |
+
+Contrôle : la moyenne pondérée des tranches retrouve 3 022 € pour la FPE (publié : 3 018) et 2 318 € pour la FPT après renormalisation des parts (publié : 2 317).
+
+### Limites et points à traiter
+
+- **Indépendants : source trouvée, mais avec un champ et une définition différents** (voir le bloc suivant).
+- **Champ « privé » différent selon la source** : 2 814 € (DGAFP, hors apprentis, stagiaires, agricoles et particuliers employeurs) contre 2 733 € (BTS de la fiche 8, hors agriculture et particuliers employeurs, avec alternants et stagiaires). Pour comparer public et privé, utiliser un seul champ ; sinon documenter l'écart.
+- **Public : seulement cinq tranches d'âge, sans croisement avec le sexe** : les salaires par âge et sexe de la v0.1 seront obtenus en combinant le profil par âge et l'écart par sexe (hypothèse d'indépendance à documenter).
+- **Tranche « 60 ans ou plus »** : trop large pour lire le salaire à l'âge de départ (comme pour le privé).
+### Indépendants (Insee Références, « Emploi et revenus des indépendants », édition 2025)
+
+| Champ | Contenu |
+|---|---|
+| Nom et organisme | Insee, base Non-salariés 2022, PDF `ERI2025.pdf` (fiches 1.2, 1.6, 1.7) et classeur `ERI2025-F12.xlsx` (fiche 1.12 : professions libérales) |
+| URL, licence | Site : https://www.insee.fr (collection Insee Références, « Emploi et revenus des indépendants », édition 2025) ; page exacte à relever ; reproduction partielle autorisée avec mention de la source (© Insee 2025) |
+| Date de téléchargement | 25/11/2026 (à corriger si besoin) |
+| Millésime et champ | **2022** (année de référence de la plupart des statistiques) ; France hors Mayotte ; non-salariés hors agriculture ; revenu d'activité **net mensuel moyen**, un revenu déficitaire étant compté nul ; hors taxés d'office |
+| Version du simulateur | v0.1 pour la catégorie « indépendants » |
+
+**Valeurs de contrôle (2022, euros nets par mois, hors agriculture)**
+
+| | Ensemble | Classiques | Micro-entrepreneurs |
+|---|---:|---:|---:|
+| Revenu moyen | 2 420 | 4 030 | 670 |
+| Effectifs au 31/12 (milliers) | 3 615 | 1 850 | 1 766 |
+| Femmes | 1 980 | 3 470 | 600 |
+| Hommes | 2 720 | 4 360 | 720 |
+| Professions libérales (1 297 000 personnes) | 3 870 | 5 790 | 870 |
+
+Par tranche d'âge (ensemble des non-salariés hors agriculture) : moins de 30 ans 990 € (12,6 % des effectifs) ; 30 à 44 ans 2 220 € (37,7 %) ; 45 à 59 ans 3 000 € (35,7 %) ; 60 ans ou plus 2 590 € (14,0 %). Revenu médian des non-salariés classiques : 2 900 € ; 10,6 % ont un revenu nul ou déficitaire.
+
+**Limites propres aux indépendants**
+
+- **Revenu d'activité annuel ramené au mois**, avec revenus déficitaires comptés nuls : ce n'est pas un salaire en équivalent temps plein. Il n'est pas directement comparable aux salaires des privés et du public ci-dessus.
+- **Un revenu moyen très dispersé** : micro-entrepreneurs 670 € contre 4 030 € pour les classiques. Le revenu moyen de la catégorie dépend donc fortement de la part de micro-entrepreneurs (49 % en 2022, 41 % en 2019), ce qui rend la catégorie instable dans le temps.
+- **Année 2022**, en euros courants, alors que le public est de 2024 : à actualiser ou à documenter.
+- **Tranches d'âge de l'Insee** (moins de 30, 30-44, 45-59, 60 ou plus) différentes de celles du public et du privé : une grille commune sera à définir.
+- **Cotisations et pensions** : le revenu est net ; le lien avec l'assiette de cotisation des indépendants n'est pas établi.
+- **Conversion brut-net** : seulement disponible pour le public (rapport d'environ 1,23, qui dépend du taux de primes et des cotisations des fonctionnaires). Rien d'équivalent trouvé pour le privé.
+- **Salaire net** alors que le taux de liquidation $\theta_c$ est défini en brut : prévoir une conversion brut-net documentée, ou travailler en net des deux côtés.
+- **Tranche « 55 ans ou plus »** : trop large pour lire « le salaire à l'âge de départ » (âges 62 à 64 ans environ). À traiter par une hypothèse ou une autre source.
+- **Équivalent temps plein** : cohérent avec un salaire moyen par cotisant à temps plein, mais pas avec une masse salariale réelle (temps partiel). À documenter pour l'assiette $A_t$.
+- **Pas de PCS en v0.1** : la PCS est réservée à la v0.2, ce fichier est conservé pour cette version.
+
+---
+
+## Fiche 10 : Pensions (stock et nouveaux liquidants) (brouillon, partielle)
+
+| Champ | Contenu |
+|---|---|
+| Nom et organisme | Drees, EACR, onglet `C-Droits_directs` (ligne « Tous régimes », issue du modèle Ancetre), même fichier que la fiche 7 |
+| Date de publication, licence, téléchargement | Identiques à la fiche 7 |
+| Millésime et champ | Stock de retraités de droit direct au 31 décembre 2024 ; flux de nouveaux liquidants de 2024 (vivants au 31 décembre). Données jusqu'en **2024** seulement |
+| Granularité | Sexe, âge au 31 décembre (âges individuels de 22 à 109 ans, plus des lignes « Ensemble » et « plus de 95 »), lieu de naissance, résidence ; effectifs, avantage principal moyen de droit direct (`m1`), pension totale moyenne (`mont`) |
+| Version du simulateur | v0.1 |
+
+### Valeurs de contrôle (tous régimes, 2024, résidence « Ensemble »)
+
+- Stock : 17 298 245 retraités (ligne « Ensemble ») ; femmes 9 102 269, hommes 8 072 506 sur les âges individuels.
+- Avantage principal moyen (`m1`) : 1 646,9 € par mois pour l'ensemble ; femmes 1 324 € et hommes 2 018 € en moyenne sur les âges individuels.
+- Nouveaux liquidants de 2024 : 857 880 (ligne « Ensemble »), `m1` moyen 1 664,7 € par mois ; femmes 1 393 € (435 323 personnes), hommes 1 945 € (422 340 personnes).
+- Âges de liquidation : pic à 62 ans (222 824 liquidants), puis 63 ans (159 442) et 67 ans (90 563).
+- Âge conjoncturel de départ 2024 (onglet `A-Age_conjoncturel`) : Régime général 63,60 ans (femmes 63,70 ; hommes 63,50) ; Agirc-Arrco 63,43 ; SRE civils 63,18 ; CNRACL 62,46 ; ERAFP 63,47.
+
+### Limites et points à traiter
+
+- **Dernière année disponible : 2024**, alors que la calibration porte sur **2026**. Décision à prendre : faire avancer le stock de 2024 à 2026 (revalorisations des pensions, décès, nouvelles liquidations) ou fixer l'année de calibration à 2024. Les taux de revalorisation de 2025 et 2026 sont à relever à la source (non vérifiés).
+- **Définition de `m1` (documentation EACR, table A)** : avantage principal moyen de **droit direct**, perçu en **décembre** (ni effectifs ni montants ne sont des moyennes annuelles ; effectifs × `m1` × 12 ne retrouve donc pas exactement les dépenses de l'année). Il **comprend** les minima de pension (minimum contributif, minimum garanti) ; il **exclut** le droit dérivé (`m2`), la majoration pour trois enfants, la majoration pour tierce personne, le minimum vieillesse et l'ASI. La variable `mont` inclut ces éléments. Les données portent seulement sur les prestations versées en rente (pas de versement forfaitaire unique). Ce qui reste à confirmer : si la ligne « Tous régimes » somme bien base et complémentaire pour un même retraité (elle provient du modèle Ancetre).
+- **Conséquence pour $\theta_c$** : `m1` exclut la majoration pour trois enfants, ce qui sous-estime la pension effectivement versée ; la comparaison avec les taux de remplacement des cas types du COR (qui incluent pensions de base et complémentaires) doit en tenir compte.
+- **Brut ou net** : la documentation ne le dit pas explicitement pour `m1`. Elle traite les prélèvements sociaux (CSG, CRDS, Casa, cotisation maladie) dans une table distincte (`A-Prelev_sociaux`), ce qui laisse penser que `m1` est **avant prélèvements** (donc brut), mais ce n'est pas confirmé. À vérifier auprès de la Drees ou dans la fiche 23 du panorama « Les retraités et les retraites » avant tout rapprochement avec les salaires nets des fiches 8.
+- **Âge moyen de liquidation (`ageliq`)** : défini dans la table C comme l'âge moyen de liquidation, mais vide pour « Tous régimes ». On utilise la distribution des liquidants par âge (colonne `Age`, âge en fin d'année) ou l'âge conjoncturel de départ par régime. Attention : `Age` est l'âge en fin d'année, pas l'âge à la liquidation.
+- **Écart de 123 445 personnes** (0,7 %) entre la somme des âges individuels (17 174 800) et la ligne « Ensemble » : non expliqué par la documentation. **Hypothèses non vérifiées** : (i) la ligne « Tous régimes » provient du modèle Ancetre et la table A est actualisée l'année suivante (principe de « double interrogation », variable `PlusRécent`) alors que la table C n'est cohérente avec la table A que pour la même édition ; (ii) la ligne « plus de 95 » ou des cellules masquées. À tester : comparer `PlusRécent` et recalculer la somme sans la ligne « plus de 95 ».
+- **Âges extrêmes et aberrants** : des liquidants apparaissent à partir de 22 ans (anciens invalides de la fonction publique) ; la classe 100+ du cahier doit être construite en agrégeant les âges 100 à 109.
+- **Revalorisations** : +0,9 % au 1er janvier 2026 pour les retraites de base (COR, juin 2026, partie 1, chapitre 2 ; LFSS 2026). Pour 2025, le taux n'apparaît pas dans les documents fournis : à relever à la source. Pour l'Agirc-Arrco, la valeur de service du point n'a **pas été revalorisée en 2025** (pas d'accord entre partenaires sociaux) ; en 2026 elle suit l'inflation hors tabac moins 0,4 point.
+- **Cas types du COR** : récupérés (tableau ci-dessous). Ils servent de contrôle de $\theta_c$, avec les réserves indiquées.
+
+### Taux de remplacement des cas types du COR (juin 2026)
+
+Source : COR, Rapport annuel de juin 2026, partie 3, chapitre 3, tableau 3.3 (calculs Drees, modèle Trajectoire). Taux de remplacement **net**, pensions de base et complémentaires, scénario de référence ; génération 1964 sauf aide-soignant (1969), policier (1974) et médecin (1960). Le salaire de fin de carrière est exprimé en multiple du revenu moyen par tête (RMPT). URL : https://www.cor-retraites.fr/sites/default/files/2026-06/RA_Part3_Chap3.pdf.
+
+| Cas type | Salaire de fin de carrière | Âge d'ouverture des droits | Taux de remplacement à cet âge |
+|---|---|---:|---:|
+| 1 Cadre | 2,51 × RMPT | 62,75 | 51,9 % |
+| 2 Non-cadre | 0,74 × RMPT | 62,75 | 75,2 % |
+| 3 Non-cadre avec chômage | 0,62 × RMPT | 62,75 | 66,7 % |
+| 4 Femme, deux enfants | 0,62 × RMPT | 62,75 | 80,9 % |
+| 5 Catégorie B sédentaire | 0,99 × RMPT (30 % de primes) | 62,75 | 58,3 % |
+| 6 Catégorie A, faibles primes | 1,51 × RMPT (15 % de primes) | 62,75 | 62,3 % |
+| 7 Catégorie A+, fortes primes | 2,31 × RMPT (44 % de primes) | 62,75 | 39,9 % |
+| 8 Policier | 1,02 × RMPT (44 % de primes) | 52,75 | 40,4 % |
+| 9 Aide-soignant | 0,83 × RMPT (25 % de primes) | 57,75 | 63,4 % |
+| 10 Adjoint technique territorial | 0,79 × RMPT (20 % de primes) | 62,75 | 70,9 % |
+| 11 Attaché territorial | 1,48 × RMPT (27 % de primes) | 62,75 | 60,1 % |
+| 12 Exploitant agricole | 0,52 × RMPT | 62,75 | 78,3 % |
+| 13 Médecin | 2,66 × RMPT | 62 | 44,9 % |
+
+Les taux dépendent fortement du niveau de revenu (de 40 % à 81 %) : un $\theta_c$ unique par catégorie ne peut en être qu'une moyenne. Pour un départ à 67 ans (annulation de la décote), les taux vont de 51,9 % à 94,7 %.
+
+**Réserves pour la comparaison avec $\theta_c$** : (i) les cas types sont des taux **nets** de carrière complète et de salaire de fin de carrière, alors que $\theta_c$ est un taux moyen sur des liquidants réels (carrières incomplètes incluses) ; (ii) génération 1964, alors que les liquidants de 2026 sont des générations 1960 à 1964 ; (iii) base et complémentaire sont incluses. On compare donc des ordres de grandeur, pas des valeurs.
+- Les pensions de **droit dérivé** (réversion) sont hors périmètre de la v0.1, mais figurent dans l'onglet `D-Droits_dérivés`.
+
+---
+
+## Fiche 9 : Âge légal de départ et durée d'assurance par génération
+
+| Champ | Contenu |
+|---|---|
+| Nom et organisme | COR, Rapport annuel de juin 2026, partie 1, chapitre 2, section 1.2 et tableau 1.4 (d'après la loi n° 2025-1403 de financement de la sécurité sociale pour 2026) |
+| URL, licence | https://www.cor-retraites.fr/sites/default/files/2026-06/RA_Part1_Chap2.pdf (page du rapport : voir la fiche 7). Rapport publié le 11 juin 2026 ; licence non indiquée sur la page |
+| Date de téléchargement | 25/11/2026 (à corriger si besoin) |
+| Champ | Salariés du privé, non-salariés et fonctionnaires sédentaires ; pensions liquidées à compter du **1er septembre 2026** |
+| Version du simulateur | v0.1 : table $a^{\text{lég}}(g)$ du fichier de configuration |
+
+**Âge d'ouverture des droits et durée d'assurance pour le taux plein, après suspension de la réforme de 2023**
+
+| Génération | Âge d'ouverture des droits | Durée requise (trimestres) |
+|---|---:|---:|
+| 1960 | 62 ans | 167 |
+| 1961 (1er janvier au 31 août) | 62 ans | 168 |
+| 1961 (1er septembre au 31 décembre) | 62 ans et 3 mois | 169 |
+| 1962 | 62 ans et 6 mois | 169 |
+| 1963 | 62 ans et 9 mois | 170 |
+| 1964 | 62 ans et 9 mois | 170 |
+| 1965 (1er janvier au 31 mars) | 62 ans et 9 mois | 170 |
+| 1965 (1er avril au 31 décembre) | 63 ans | 171 |
+| 1966 | 63 ans et 3 mois | 172 |
+| 1967 | 63 ans et 6 mois | 172 |
+| 1968 | 63 ans et 9 mois | 172 |
+| 1969 et suivantes | 64 ans | 172 |
+
+La montée en charge de la réforme de 2023 est suspendue pour la génération 1964 et les assurés nés du 1er janvier au 31 mars 1965, puis reprend : 64 ans est atteint pour la génération 1969 (et non 1968), 172 trimestres pour la génération 1966 (et non 1965).
+
+### Limites et points à traiter
+
+- **Âges fractionnaires** (trimestres) alors que le modèle fonctionne en âges entiers : une convention est à choisir et à documenter (par exemple arrondir à l'entier supérieur, ou interpoler entre deux âges). Elle change l'âge effectif de départ de plusieurs générations (1961 à 1968).
+- **Fonctionnaires de catégorie active** : règles distinctes (âge d'ouverture de 59 ans pour la génération 1974 après suspension, 172 trimestres pour la génération 1971). Hors v0.1, mais à signaler dans les limites.
+- **Retraites anticipées** (carrière longue, incapacité) : hors périmètre v0.1 (cahier des charges, section 3.4) ; le tableau ci-dessus ne les couvre pas.
+- **Âge de départ observé** supérieur à l'âge légal : le paramètre $\delta_{c,s}$ est calibré sur l'écart entre l'âge conjoncturel de départ (fiche 10) et l'âge légal de la génération concernée.
+- **Règles d'indexation** : l'article du code de la sécurité sociale fondant l'indexation des pensions de base sur les prix n'a pas été relu à la source (Légifrance) ; seul le principe figure dans le rapport du COR. À vérifier.
+
+---
+
+## Fiche 11 : Hypothèses macroéconomiques (brouillon, partielle)
+
+| Champ | Contenu |
+|---|---|
+| Nom et organisme | COR, Rapport annuel de juin 2026 (hypothèses de la partie 1, chapitre 1, section 3, p. 43-45) ; trajectoire 2026-2029 du Rapport d'avancement annuel d'avril 2026 |
+| URL, licence | Page du rapport : https://www.cor-retraites.fr/rapports-du-cor/rapport-annuel-cor-juin-2026-evolutions-perspectives-retraites-france (publié le 11 juin 2026). Le chapitre sur les taux de cotisation (https://www.cor-retraites.fr/sites/default/files/2026-06/RA_Part3_Chap1.pdf) n'a pas encore été lu. Guide sur les bons du Trésor : URL à identifier |
+| Date de téléchargement | 25/11/2026 (à corriger si besoin) |
+| Version du simulateur | v0.1 : repères pour calibrer les distributions du Monte-Carlo (phase 5), pas valeurs centrales du simulateur |
+
+**Scénario de référence du COR**
+
+- Démographie : hypothèses centrales de l'Insee (gains d'espérance de vie, fécondité de 1,45 enfant par femme à partir de 2028, solde migratoire net de 150 000 personnes par an).
+- Croissance de la productivité horaire du travail : 0,7 % par an à partir de 2040. Variantes : 0,4 % et 1,0 %.
+- Taux de chômage : 7,0 % à partir de 2040. Variantes : 5,0 % et 10,0 %.
+- Croissance du PIB : 0,9 % en 2026, 1,0 % en 2027, 1,2 % en 2028 et en 2029 (révisée à la baisse en avril 2026).
+- Inflation (prévision du gouvernement, utilisée pour la revalorisation des pensions) : 1,9 % en 2026, 1,6 % en 2027 ; Consensus Forecasts de mai 2026 : 2,0 % et 1,7 %.
+- Chômage prévu par le Consensus : 7,9 % en 2026 et 2027.
+- La rémunération horaire évolue comme la productivité horaire si le partage de la valeur ajoutée et la durée du travail sont stables.
+
+### Limites et points à traiter
+
+- **Cohérence avec la démographie des fiches 2 à 5** : le COR retient une fécondité de 1,45 à partir de 2028 ; à comparer à l'hypothèse lue dans `hyp_fecondite` de l'Insee avant de supposer qu'elles coïncident.
+- **Croissance réelle des salaires** : le repère du COR est 0,7 % par an à long terme. Toute valeur provisoire nettement supérieure (par exemple 2 %) devra être justifiée ou remplacée.
+- **Rendement des réserves (repère de marché, source secondaire)** : le fichier fourni est un guide pédagogique grand public (« Les bons du Trésor », vérifié le 7 novembre 2026, auteur et URL à identifier) qui reprend les communiqués de l'Agence France Trésor. **À recouper avec les communiqués de l'AFT avant tout usage dans `config/assumptions.yaml`.** Taux nominaux moyens pondérés des adjudications : BTF à 12 mois 3,352 % (2 novembre 2026) ; OAT 2,40 % septembre 2029 : 3,59 % (17 septembre) ; OAT 3,70 % novembre 2036 (environ 10 ans) : 4,74 % (5 novembre). Taux de la facilité de dépôt de la BCE : 2,50 % depuis le 16 septembre 2026.
+- **Passage au réel (calcul indicatif, non sourcé)** : 4,74 % moins une inflation de 1,6 % à 2,0 % (fourchette du COR et du Consensus pour 2026-2027) donne environ **2,7 % à 3,1 % réel** pour l'OAT à 10 ans. Ce n'est pas le rendement d'un portefeuille de réserves (qui comporterait des actifs risqués) ni un rendement garanti, et le taux à 10 ans de 2026 ne dit rien du rendement moyen sur 40 ans. Un taux réel direct (OAT indexées) n'est pas dans le fichier fourni.
+- **Taux de cotisation** : non recherchés. Le taux $\tau_0$ est calibré par construction et ne dépend donc pas d'une donnée externe, mais une valeur de contrôle serait utile.
+
+---
+
 ## Fiches restantes (phase 1)
 
-- [ ] Fiche 6 : emploi et chômage par âge et sexe (INSEE Enquête Emploi, DARES).
-- [ ] Fiche 7 : effectifs de cotisants et de retraités par catégorie (DREES, rapports des caisses).
-- [ ] Fiche 8 : salaires par catégorie et sexe, profil par âge si disponible (INSEE).
-- [ ] Fiche 9 : règles de cotisation et de pension (âge légal par génération, indexation ; Légifrance, Urssaf, service-public.fr).
-- [ ] Fiche 10 : pensions du stock de 2026, pension des nouveaux liquidants, salaire à l'âge de départ, cas types (DREES, COR).
-- [ ] Fiche 11 : macroéconomie (scénario de référence du COR, rendements ; Agence France Trésor).
+- [~] Fiche 6 : rédigée à partir de trois tranches d'âge seulement. À compléter : emploi par âge quinquennal ou individuel (Insee, enquête Emploi, séries détaillées).
+- [~] Fiche 7 : cotisants par catégorie, ordre de grandeur obtenu (public 19 %, indépendants 11 à 13 %, privé par solde). Manquant : CNAVPL ; règle d'attribution à décider.
+- [~] Fiche 8 : privé, public (FPE, FPT) et indépendants (2022) renseignés. Manquants : FPH par âge (Insee Première n° 2102) ; grille d'âge commune.
+- [x] Fiche 9 : âge légal et durée par génération (article d'indexation à relire sur Légifrance).
+- [~] Fiche 10 : revalorisation 2025 des pensions de base ; brut ou net de `m1` ; écart de 123 445 personnes.
+- [~] Fiche 11 : repères COR renseignés ; taux de marché de source secondaire à recouper avec l'AFT.
+
+Légende : [x] complète, [~] utilisable avec les réserves indiquées, [ ] non commencée.
