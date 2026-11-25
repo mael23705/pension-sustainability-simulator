@@ -1,0 +1,161 @@
+# Paramètres du simulateur (v0.1).
+# Règle (cahier 6.1) : aucune valeur sans source, calibration ou convention documentée.
+# `value: null` = pas de valeur retenue à ce stade (à relever ou à calculer).
+# Statuts : observed | official_projection | calibrated | documented_hypothesis | convention
+# Les valeurs marquées toy_example ou test_only ne servent jamais à un résultat présenté.
+# Détail et plages de test : docs/hypotheses.md. Sources : docs/donnees.md.
+
+meta:
+  config_version: "0.1"
+  simulator_version: "v0.1"
+  currency: "EUR constant 2026"
+
+horizon:
+  start_year: {value: 2026, status: convention}
+  flow_years: {value: 40, status: convention}   # flux 2026 à 2065 ; réserves jusqu'en 2066
+
+simulation:
+  n_simulations: {value: 10000, status: convention}
+  random_seed: {value: 2026, status: convention}   # graine fixe (np.random.default_rng)
+  alpha_levels: {value: [0.80, 0.90, 0.95], status: convention}
+  wilson_confidence: {value: 0.95, status: convention}
+
+demography:
+  open_class_age: {value: 100, status: convention}   # classe ouverte 100 ans et plus
+  entry_age_a0:
+    value: 20
+    status: convention                 # décision D1 (docs/hypotheses.md)
+    test_range: [18, 22]
+  categories: [prive, public, independants]
+  affiliation_shares_pi:
+    status: documented_hypothesis      # décision D2 ; sources : fiche 7
+    values: {prive: 0.70, public: 0.19, independants: 0.11}
+    test_range:
+      public: [0.17, 0.21]
+      independants: [0.09, 0.14]
+      prive: residual
+  migrant_shares_pi_mig:
+    status: documented_hypothesis      # décision D3
+    rule: equal_to_pi_above_a0         # en dessous de a0 : stock non segmenté
+  initial_population_shares:
+    status: documented_hypothesis
+    rule: equal_to_pi_all_ages_above_a0
+  # Sources de données : fiches 1 à 5 de docs/donnees.md (fichiers dans data/raw/, git-ignorés).
+
+retirement:
+  age_rounding: {value: half_up, status: convention}   # décision D5
+  # Âge légal d'ouverture des droits par génération, après suspension de la réforme de 2023.
+  # Source : COR, rapport annuel de juin 2026, partie 1, chapitre 2, tableau 1.4 (fiche 9).
+  # Liquidations à compter du 1er septembre 2026. Les générations 1961 et 1965, coupées en
+  # deux périodes, sont moyennées au prorata de la durée ; ensuite arrondi à l'entier.
+  legal_age_by_generation:
+    status: observed
+    source: "COR RA juin 2026, tableau 1.4 (LFSS 2026)"
+    fractional:
+      1960: 62.0
+      1961: 62.0833       # 8 mois à 62 ans, 4 mois à 62,25
+      1962: 62.5
+      1963: 62.75
+      1964: 62.75
+      1965: 62.9375       # 3 mois à 62,75, 9 mois à 63
+      1966: 63.25
+      1967: 63.5
+      1968: 63.75
+      1969: 64.0          # 1969 et générations suivantes
+    integer:
+      1960: 62
+      1961: 62
+      1962: 63
+      1963: 63
+      1964: 63
+      1965: 63
+      1966: 63
+      1967: 64
+      1968: 64
+      1969: 64
+    earlier_generations: 62     # générations antérieures à 1960 : 62 (âge minimal du tableau)
+    later_generations: 64       # 1969 et suivantes
+  required_quarters:
+    status: observed
+    note: "Durée d'assurance requise (167 à 172 trimestres) hors périmètre v0.1 ; voir fiche 9"
+  delta_effective_minus_legal:
+    status: calibrated
+    method: "âge conjoncturel de départ (EACR, A-Age_conjoncturel) moins âge légal de la génération, arrondi"
+    value: null                 # par catégorie et sexe, à calculer
+    test_range_years: [-1, 1]
+    constant_over_horizon: true
+
+pensions:
+  theta_replacement_rate:
+    status: calibrated
+    method: "pension des nouveaux liquidants / salaire à l'âge de départ, même génération et catégorie"
+    fallback_label: "taux de remplacement apparent"
+    value: null                 # dépend du brut ou net de m1 (point ouvert, phase 3)
+  stock_pensions_2026:
+    status: observed
+    source: "EACR, table C-Droits_directs, m1 (dernière année : 2024)"
+    value: null
+  indexation:
+    status: observed
+    rule: prices
+    base_pension_revaluation_2026: {value: 0.009, source: "COR RA juin 2026 (LFSS 2026)"}
+    base_pension_revaluation_2025: {value: null}   # à relever à la source
+
+employment:
+  observed_employment_rate:
+    status: observed
+    source: "Insee, enquêtes Emploi (fiche 6)"
+    value: null                 # taux par âge et sexe à charger depuis data/raw/
+  conditional_rate_rule: "e = e_obs / (1 - rho) ; jamais plafonné ; violation => échec du test"
+
+wages:
+  status: observed
+  source: "Fiche 8 : BTS (privé), Insee Première 2100 et 2101 (public), Insee Références 2025 (indépendants)"
+  value: null
+  gross_to_net_public: {value: 1.23, status: observed, source: "Insee Première 2100, 2101 (rapport brut/net)"}
+  contribution_base: {value: total_payroll_no_cap, status: convention}
+
+macro:
+  # Scénario de référence du COR, juin 2026 (fiche 11).
+  productivity_growth_long_term:
+    value: 0.007
+    status: official_projection
+    from_year: 2040
+    test_range: [0.004, 0.010]
+  unemployment_rate_long_term:
+    value: 0.07
+    status: official_projection
+    from_year: 2040
+    test_range: [0.05, 0.10]
+  fertility_cor_sensitivity: {test_range: [1.2, 1.7], status: official_projection}
+  net_migration_cor_sensitivity: {test_range: [70000, 230000], status: official_projection}
+
+finance:
+  contribution_rate_tau0:
+    status: calibrated
+    method: "tau0 = B_2026 / A_2026 (taux de calibration du modèle, pas un taux légal)"
+    value: null
+  initial_reserve_k:
+    status: convention
+    reference: 0                # k = 0 : cas limite analytique
+    test_range: [0, 3]          # plage à justifier avec des réserves de régimes réels
+    definition: "R_2026 = k x B_2026"
+  external_funding_F:
+    value: 0
+    status: convention
+  real_return_on_reserves:
+    status: documented_hypothesis
+    value: null                 # à sourcer (Agence France Trésor) ; repère indicatif dans la fiche 11
+  real_discount_rate:
+    status: documented_hypothesis
+    value: null                 # à définir en phase 4
+
+tests:
+  conservation_tolerance: {value: 1.0e-9, status: convention}
+  insee_total_population_max_relative_error: {value: 0.01, status: convention}
+  insee_age_group_max_relative_error: {value: 0.02, status: convention}
+  insee_age_groups: {value: [[0, 19], [20, 59], [60, 120]], status: convention}
+
+toy_example:   # cas jouet à trois classes d'âge : valeurs de test uniquement
+  status: toy_example
+  note: "Valeurs à définir dans tests/ avec le calcul à la main ; jamais utilisées pour un résultat"

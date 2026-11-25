@@ -38,7 +38,6 @@ Une fiche par jeu de données. Les fichiers bruts sont dans `data/raw/` (jamais 
 
 ## Fiche 2 : Projections de population 2026, scénario central
 
-<<<<<<< HEAD
 | Champ | Contenu |
 |---|---|
 | Nom et organisme | Projection de population 2026, France, **scénario central** (fichier `00_central.xlsx`). Insee, Insee Résultats « Projections de population 2026 pour la France » |
@@ -52,21 +51,6 @@ Une fiche par jeu de données. Les fichiers bruts sont dans `data/raw/` (jamais 
 | Format | xlsx, 2 450 989 octets (2,45 Mo), 18 onglets |
 | Transformations prévues | Extraire les âges 0 à 105+ de `populationF` et `populationH` ; extraire les quotients de mortalité de `hyp_mortaliteF` et `hyp_mortaliteH` ; extraire la fécondité de `hyp_fecondite` et les naissances de `naissance` ; extraire le solde migratoire de `solde_migratoire`. Ne garder que 2026 à 2070 pour le benchmark. Produire des tables au format long dans `data/processed/` |
 | Version du simulateur | v0.1 (validation et hypothèses centrales) |
-=======
-|Champ|Contenu|
-|-|-|
-|Nom et organisme|Projection de population 2026, France, **scénario central** (fichier `00\_central.xlsx`). Insee, Insee Résultats « Projections de population 2026 pour la France »|
-|URL de la page|https://www.insee.fr/fr/statistiques/8991068|
-|URL du fichier|À compléter : clic droit sur le lien de téléchargement du scénario central, puis « Copier l'adresse du lien »|
-|Date de publication|08/06/2026|
-|Date de téléchargement|23/11/2026|
-|Millésime et champ|Projections de population 2026, horizon 2070. Champ : France (note du fichier : France métropolitaine jusqu'en 1994, France hors Mayotte de 1995 à 2013, France à partir de 2014). Source indiquée : Insee, estimations de population jusqu'en 2023, projections de population 2026 à partir de 2024|
-|Granularité|Annuelle, de 1962 à 2070 (109 colonnes d'années), par âge et par sexe (ensemble, femmes, hommes). Âges 0 à 104 puis « 105+ ». Mortalité par âge de 0 à 120 ans|
-|Licence|Licence Ouverte 2.0 (Etalab), comme la fiche 1 : citer « Source : Insee », indiquer la date de mise à jour (08/06/2026), ne pas altérer le sens des informations|
-|Format|xlsx, 2 450 989 octets (2,45 Mo), 18 onglets|
-|Transformations prévues|Extraire les âges 0 à 105+ de `populationF` et `populationH` ; extraire les quotients de mortalité de `hyp\_mortaliteF` et `hyp\_mortaliteH` ; extraire la fécondité de `hyp\_fecondite` et les naissances de `naissance` ; extraire le solde migratoire de `solde\_migratoire`. Ne garder que 2026 à 2070 pour le benchmark. Produire des tables au format long dans `data/processed/`|
-|Version du simulateur|v0.1 (validation et hypothèses centrales)|
->>>>>>> a3869af9adf18fd105324c36dc422ffa95c165cc
 
 ### Contenu des onglets utiles
 
