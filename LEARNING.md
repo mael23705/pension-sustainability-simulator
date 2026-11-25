@@ -19,4 +19,4 @@ Une ligne par notion apprise. Les lignes ci-dessous sont des amorces à reformul
 - [ ] matplotlib : pyramide des âges
 - [ ] GitHub Actions : un workflow minimal qui lance les tests
 
-Chaque notion : 1 à 3 heures, puis une ligne ici.
+
