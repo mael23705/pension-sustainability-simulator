@@ -457,6 +457,37 @@ Par tranche d'âge (ensemble des non-salariés hors agriculture) : moins de 30 a
 - Les effectifs de ce tableau sont arrondis aux dizaines de milliers et peuvent varier d'une année à l'autre (note du panorama).
 - Ordre des pensions : public supérieur au régime général, lui-même supérieur aux non-salariés. Ce classement sert de contrôle de signe pour $\theta_c$ en phase 3.
 
+### Tables dérivées de l'EACR et compléments du 26/11/2026 (phase 3)
+
+**Reconstruction.** `python scripts/build_eacr_tables.py` lit le classeur EACR (`62 EACR diffusée Part 1 - version du 26 mai 2026.xlsx`, dans `data/raw/`) et écrit dans `data/processed/` (non versionné) :
+
+| Fichier | Contenu | Contrôle |
+|---|---|---|
+| `eacr-stock-2024.csv` | Stock de retraités de droit direct au 31/12/2024 : sexe (T, F, H), âge, effectifs, `m1` | Ligne « Ensemble » : 17 298 245 (F 9 192 312 ; H 8 105 933) ; somme des âges individuels en dessous (écart D13) |
+| `eacr-nouveaux-liquidants-2024.csv` | Liquidants de 2024, mêmes colonnes | Ligne « Ensemble » : 857 880 |
+| `eacr-age-conjoncturel-2024.csv` | Âge conjoncturel de départ 2024 par caisse et sexe | Régime général (CNAV) 63,60 (F 63,70 ; H 63,50) |
+
+Lignes à `m1` non diffusé (secret statistique, 3 à 9 personnes par ligne) : écartées des effectifs et des montants par `data_io/eacr.py`, qui publie leur nombre (`df.attrs`). Les lignes « Ensemble » et « plus de 95 » sont des totaux, pas des âges. Les âges de 100 à 109 ans sont agrégés dans la classe ouverte (moyenne de `m1` pondérée par les effectifs).
+
+**Tableaux 3 et 4 du panorama DREES 2026 par sexe** (fin 2024, régime principal ; effectifs en milliers ; pension brute mensuelle moyenne avec majoration, en euros) :
+
+| Régime principal | Effectifs F | Effectifs H | Pension F | Pension H | Catégorie du modèle |
+|---|---:|---:|---:|---:|---|
+| Régime général | 6 640 | 5 490 | 1 200 | 2 120 | privé |
+| MSA salariés | 210 | 290 | 1 430 | 1 920 | privé |
+| FPE civils | 900 | 660 | 2 390 | 2 820 | public |
+| FPE militaires | 30 | 320 | 1 580 | 2 330 | public |
+| CNRACL | 770 | 340 | 1 790 | 2 050 | public |
+| Régimes spéciaux | 110 | 370 | 2 370 | 2 840 | public |
+| Autre régime de non-salariés (MSA non-salariés et professions libérales) | 400 | 420 | 1 070 | 1 750 | indépendants |
+| Ensemble des retraités de droit direct | 9 190 | 8 100 | 1 380 | 2 190 | |
+
+« Aucun régime principal » (190 000 personnes, 1 %) n'est rattaché à aucune catégorie. Ces valeurs servent à calculer $\kappa_{c,s}$ (D17), non à fixer un niveau.
+
+**Salaires du privé, BTS 2024** (`TAB_BTS_SEX_AGE_2024.xlsx`, onglet FRANCE, euros nets mensuels EQTP) : femmes moins de 25 ans 1 591, 25-39 ans 2 435, 40-49 ans 2 759, 50-54 ans 2 817, 55 ans ou plus 2 815 ; hommes 1 645, 2 629, 3 186, 3 431, 3 596 (ensemble 2 733 ; femmes 2 514 ; hommes 2 891, conformes aux valeurs de contrôle).
+
+**Inflation annuelle moyenne** (Insee, « L'essentiel sur… l'inflation », France hors Mayotte) : 2022 5,2 % ; 2023 4,9 % ; 2024 2,0 % ; 2025 0,9 %. 2026 : 1,9 % (prévision du gouvernement, COR, fiche 11).
+
 ### Taux de remplacement des cas types du COR (juin 2026)
 
 Source : COR, Rapport annuel de juin 2026, partie 3, chapitre 3, tableau 3.3 (calculs Drees, modèle Trajectoire). Taux de remplacement **net**, pensions de base et complémentaires, scénario de référence ; génération 1964 sauf aide-soignant (1969), policier (1974) et médecin (1960). Le salaire de fin de carrière est exprimé en multiple du revenu moyen par tête (RMPT). URL : https://www.cor-retraites.fr/sites/default/files/2026-06/RA_Part3_Chap3.pdf.

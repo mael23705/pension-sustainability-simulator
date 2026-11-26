@@ -93,7 +93,7 @@ Type : `float64` (les effectifs projetés ne sont pas entiers).
 | Phase | Modules | Tests (docs/plan-de-validation.md) |
 |---|---|---|
 | 2 | `data_io`, `config`, `demography` | T1 à T10, T12 ; cas jouet ; reproduction Insee |
-| 3 | `economics`, `actuarial_model` | T11 ; cas jouet étendu aux flux financiers ; $D_{2026} = 0$ |
+| 3 | `economics` (`employment`, `macro`, `wages`), `actuarial_model` (`retirement`, `calibration`, `finance`, `model`), `data_io.eacr` | T8, T11 ; cas jouet financier à $10^{-9}$ ; $D_{2026} = 0$ ; contrôles indépendants à boucles explicites ; mutations |
 | 4 | `actuarial_model.indicators` | Cohérence des indicateurs |
 | 5 | `scenarios` | Monotonie en $\tau$ ; tirages communs ; précision Monte-Carlo |
 
@@ -110,3 +110,4 @@ Type : `float64` (les effectifs projetés ne sont pas entiers).
 | 25/11/2026 | Version préliminaire | Fin de la phase 1 |
 | 25/11/2026 | `io/` devient `data_io/` ; ajout de `conventions.py` et `demography/comparison.py` | Un paquet `io` masque le module standard `io` de Python ; besoin de conventions d'indexation partagées et d'une projection multi-années réutilisable |
 | 25/11/2026 | Conventions du moteur (migration de l'âge 0, naissances, classe ouverte) | Voir `docs/conventions-moteur.md` |
+| 26/11/2026 | Ajout de `data_io/eacr.py`, `economics/{employment,macro,wages}.py`, `actuarial_model/{calibration,finance,model}.py` ; fonctions `reserves`, `conditional_employment` réalisées | Phase 3 : moteur financier ; les trajectoires macro ont l'axe `sim` en tête, `reserves` boucle sur les années seulement |

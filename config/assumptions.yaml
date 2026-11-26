@@ -25,6 +25,13 @@ data_files:   # noms de fichiers et onglets (data/raw/ est ignoré par Git)
   insee_population_file: {value: 3_Pop1janv_age.xlsx, status: observed}      # fiche 1
   insee_projection_file: {value: 00_central.xlsx, status: observed}          # fiches 2 à 5
   insee_population_sheet: {value: "2026", status: observed}
+  eec_zip_file: {value: DD_EEC_ANNUEL_2025_CSV_FR.zip, status: observed}          # fiche 6 ; lu par scripts/build_employment_table.py
+  eacr_xlsx_file: {value: "62 EACR diffusée Part 1 - version du 26 mai 2026.xlsx", status: observed}   # fiche 7 et 10 ; lu par scripts/build_eacr_tables.py
+  processed_dir: {value: data/processed, status: convention}   # tables dérivées, reconstruites par les scripts (ignorées par Git)
+  employment_table: {value: taux-emploi-age-sexe-2025.csv, status: calibrated}
+  eacr_stock_table: {value: eacr-stock-2024.csv, status: calibrated}
+  eacr_new_retirees_table: {value: eacr-nouveaux-liquidants-2024.csv, status: calibrated}
+  eacr_age_table: {value: eacr-age-conjoncturel-2024.csv, status: calibrated}
   insee_population_scope: {value: France, status: observed}   # France entière (Mayotte incluse depuis 2014)
 
 demography:
@@ -92,12 +99,16 @@ retirement:
   delta_effective_minus_legal:
     status: calibrated
     method: "âge conjoncturel de départ (EACR, A-Age_conjoncturel) moins âge légal de la génération, arrondi"
-    value: null                 # par catégorie et sexe, à calculer (âge légal des générations qui partaient en 2024 : à calculer)
+    value:                      # calibré le 26/11/2026 (scripts/calibrate_phase3.py) ; années entières, arrondi au plus proche, 0,5 vers le haut (D5)
+      prive:        {F: 1, H: 1}
+      public:       {F: 0, H: 0}
+      independants: {F: 0, H: 0}
+    calibration_year: {value: 2024, status: observed}   # dernière année de l'EACR ; année de référence de delta et de theta
     reference_effective_age_2024:   # décision D19
       private_general_regime: {all: 63.60, female: 63.70, male: 63.50, source: "EACR, A-Age_conjoncturel (fiche 10)"}
       public_proxy: {value: 62.9, source: "SRE civils 63,18 et CNRACL 62,46, pondérés par 1 560 et 1 110 milliers ; la CNRACL inclut des catégories actives (hors v0.1)", status: documented_hypothesis}
       independents: {value: null, note: "aucune mesure relevée"}
-    provisional_values: {independents: 0}   # delta = 0 provisoire faute de données
+    provisional_values: {independants: 0}   # delta = 0 provisoire faute de données
     test_range_years: [-1, 1]
     constant_over_horizon: true
 
@@ -112,11 +123,23 @@ pensions:
     status: calibrated
     method: "pension des nouveaux liquidants / salaire à l'âge de départ, même génération et catégorie"
     fallback_label: "taux de remplacement apparent"
-    value: null                 # dépend du brut ou net de m1 (point ouvert, phase 3)
+    value: null                 # theta_{c,s} calibré à l'exécution (src/actuarial_model/calibration.py, décision D20) et publié par scripts/calibrate_phase3.py
   stock_breakdown:              # décision D17
     status: documented_hypothesis
     rule: "p_{c,s,a} = m1_{s,a} x kappa_{c,s} x 1.0312, recalé par un facteur unique lambda sur le total observé"
-    kappa_cs: {value: null, status: calibrated, source: "Panorama DREES 2026, tableau 4 (niveaux relatifs par régime principal et sexe)"}
+    kappa_cs: {value: null, status: calibrated, source: "Panorama DREES 2026, tableaux 3 et 4 : calculé par src/actuarial_model/calibration.py (kappa_from_drees), non saisi"}
+    drees_table_3_4:            # fin 2024, retraités de droit direct, régime principal ; effectifs en milliers, pensions brutes mensuelles avec majoration (euros)
+      source: "Panorama DREES, Les retraités et les retraites, édition 2026, tableaux 3 (effectifs) et 4 (pensions), fiche 1 et fiche 5"
+      status: observed
+      all_retirees: {effectifs: {F: 9190, H: 8100}, pension: {F: 1380, H: 2190}}
+      regimes:                  # rattachement à une catégorie : D4 et D14 ; « aucun régime principal » (1 %) est exclu
+        regime_general:    {category: prive,        effectifs: {F: 6640, H: 5490}, pension: {F: 1200, H: 2120}}
+        msa_salaries:      {category: prive,        effectifs: {F: 210,  H: 290},  pension: {F: 1430, H: 1920}}
+        fpe_civils:        {category: public,       effectifs: {F: 900,  H: 660},  pension: {F: 2390, H: 2820}}
+        fpe_militaires:    {category: public,       effectifs: {F: 30,   H: 320},  pension: {F: 1580, H: 2330}}
+        cnracl:            {category: public,       effectifs: {F: 770,  H: 340},  pension: {F: 1790, H: 2050}}
+        regimes_speciaux:  {category: public,       effectifs: {F: 110,  H: 370},  pension: {F: 2370, H: 2840}}
+        autre_non_salarie: {category: independants, effectifs: {F: 400,  H: 420},  pension: {F: 1070, H: 1750}}
     lambda_diagnostics: [lambda, expenditure_before, expenditure_after, reference_total, gap_percent]   # à publier ; lambda = indicateur de cohérence
   stock_pensions_2026:
     status: observed
@@ -138,7 +161,8 @@ employment:
     derived_table: data/processed/taux-emploi-age-sexe-2025.csv   # non versionné ; reconstruit depuis data/raw/DD_EEC_ANNUEL_2025_CSV_FR.zip (méthode : fiche 6)
     concept: national_accounts  # décision D6 (Maël, 25/11/2026) : niveau = comptabilité nationale (COR, 30,6 millions en 2025)
     profile_source: enquete_emploi_2025   # profil par âge et sexe, mis à l'échelle par un facteur unique
-    scale_factor: {value: null, test_range: [1.00, 1.04], status: calibrated}   # 30,6 / 29,4 environ ; à calculer en phase 3
+    national_accounts_total: {value: 30600000, status: observed, source: "COR, rapport annuel de juin 2026 : 30,6 millions d'emplois en 2025 (fiche 7)"}
+    scale_factor: {value: 1.0414, test_range: [1.00, 1.05], status: calibrated}   # national_accounts_total / emploi de l'enquête (D6) ; recalculé et vérifié par scripts/calibrate_phase3.py
     value: null                 # chargement dans le moteur : phase 3
   conditional_rate_rule: "e = e_obs / (1 - rho_bar), rho_bar agrégé sur les catégories avec les effectifs présents ; e = 0 si rho_bar = 1 ; jamais plafonné ; violation => échec du test (décision D16)"
   retiree_employment_rate: {value: 0.0, status: convention, source: "décision D16 : pas d'emploi des retraités au régime en v0.1"}
@@ -148,11 +172,47 @@ employment:
 
 wages:
   status: observed
-  source: "Fiche 8 : BTS (privé), Insee Première 2100 et 2101 (public), Insee Références 2025 (indépendants)"
-  value: null
+  source: "Fiche 8 : BTS (privé), Insee Première 2100, 2101 et 2102 et DGAFP (public), Insee Références 2025 (indépendants)"
+  months_per_year: {value: 12, status: convention}   # montants mensuels (salaires, pensions) ramenés à l'année
   gross_to_net_public: {value: 1.23, status: observed, source: "Insee Première 2100, 2101 (rapport brut/net)"}
   gross_to_net_private: {value: 1.318, status: observed, source: "Insee Première 2079 : 3 602 euros brut / 2 733 euros net par mois en 2024 (rapport calculé)"}
+  gross_to_net_independents: {value: 1.0, status: documented_hypothesis, source: "décision D7 : revenu d'activité net utilisé tel quel"}
   contribution_base: {value: total_payroll_no_cap, status: convention}
+  # Inflation annuelle moyenne (Insee, indice des prix à la consommation, France hors Mayotte) : 2022 à 2025 observés ;
+  # 2026 : prévision du gouvernement utilisée pour la revalorisation des pensions (COR, fiche 11).
+  inflation:
+    status: observed
+    source: "Insee, L'essentiel sur l'inflation (2022 à 2025) ; COR juin 2026 (2026)"
+    values: {2022: 0.052, 2023: 0.049, 2024: 0.020, 2025: 0.009, 2026: 0.019}
+  # Les salaires de l'année de référence sont ramenés en euros 2026 par le produit des (1 + inflation) des années suivantes (D8).
+  # Le niveau commun des salaires se compense dans le calibrage (tau0 et theta) : il ne modifie ni D_t ni R_t.
+  private:
+    reference_year: 2024
+    age_band_lower_bounds: [0, 25, 40, 50, 55]    # moins de 25, 25-39, 40-49, 50-54, 55 ou plus ans
+    net_monthly_euros:
+      F: [1591, 2435, 2759, 2817, 2815]
+      H: [1645, 2629, 3186, 3431, 3596]
+    source: "Insee, Base Tous salariés, TAB_BTS_SEX_AGE_2024.xlsx, onglet FRANCE, année 2024 (fiche 8)"
+    status: observed
+  public:
+    reference_year: 2024
+    age_band_lower_bounds: [0, 30, 40, 50, 60]    # moins de 30, 30-39, 40-49, 50-59, 60 ou plus ans
+    net_monthly_euros:                            # sans croisement avec le sexe
+      fpe: [2138, 2606, 3033, 3375, 3657]
+      fpt: [1930, 2153, 2380, 2401, 2488]
+      fph: [2274, 2851, 2925, 2994, 3789]
+    sub_sector_weights: {fpe: 0.44, fpt: 0.35, fph: 0.21}   # DGAFP, répartition des agents (fiche 7)
+    sex_means_net_monthly: {F: 2638, H: 2934, all: 2742}    # DGAFP, ensemble de la fonction publique ; écart de sexe indépendant de l'âge (D10)
+    source: "Insee Première 2100 (FPE), 2101 (FPT), 2102 (FPH) ; DGAFP, Chiffres clés 2026, tableau 16 (fiche 8)"
+    status: observed
+  independents:
+    reference_year: 2022
+    age_band_lower_bounds: [0, 30, 45, 60]        # moins de 30, 30-44, 45-59, 60 ou plus ans
+    net_monthly_euros: [990, 2220, 3000, 2590]    # sans croisement avec le sexe
+    sex_means_net_monthly: {F: 1980, H: 2720, all: 2420}   # écart de sexe indépendant de l'âge (D10)
+    source: "Insee Références, Emploi et revenus des indépendants, édition 2025 (fiche 8) ; revenu d'activité, non-salariés hors agriculture"
+    status: observed
+  value: null                   # les salaires sont des tableaux (voir ci-dessus) ; w_{c,s,a} est construit par src/economics/wages.py
 
 macro:
   # Scénario de référence du COR, juin 2026 (fiche 11).
@@ -184,7 +244,7 @@ finance:
   contribution_rate_tau0:
     status: calibrated
     method: "tau0 = B_2026 / A_2026 (taux de calibration du modèle, pas un taux légal)"
-    value: null
+    value: null                 # calculé à l'exécution (run_finance) ; environ 27,8 % au 26/11/2026
   initial_reserve_k:
     status: convention
     reference: 0                # k = 0 : cas limite analytique
@@ -240,3 +300,25 @@ toy_example:   # cas jouet à trois classes d'âge (0, 1, 2+) : valeurs de test 
       fertility: [0.0, 0.5, 0.25]
       girl_share: 0.5
       net_migration: {F: [-10, 0, -14.86], M: [3, 0, 0]}
+
+toy_finance:   # cas jouet financier (phase 3) : valeurs de test uniquement, calculées à la main dans tests/test_toy_finance.py
+  status: toy_example
+  note: "Jamais utilisées pour un résultat. Même population que toy_example (années 2026 et 2027), âges 1 et 2+."
+  flow_years: 2
+  legal_age_all_generations: 2           # retraite à partir de la classe ouverte (âge 2 et plus), pour toutes les générations
+  unemployment_rate_2025: 0.10
+  paths:                                 # une valeur par année (2026, 2027)
+    productivity_growth: [0.0, 0.10]
+    unemployment: [0.10, 0.05]
+    real_return: [0.02, 0.02]
+  initial_reserve_k: 0.5
+  employment_profile: {F: [0.0, 0.5, 0.4], H: [0.0, 0.8, 0.4]}   # taux d'emploi observé aux âges 0, 1, 2
+  wages_annual_gross: {prive: {F: 100, H: 120}, public: {F: 90, H: 110}, independants: {F: 72, H: 88}}   # constants sur l'âge
+  stock:                                 # EACR fictif, âges 0, 1, 2
+    effectifs: {F: [0, 0, 60], H: [0, 0, 50]}
+    m1: {F: [0, 0, 10], H: [0, 0, 12]}
+  new_retirees:
+    effectifs: {F: [0, 0, 10], H: [0, 0, 20]}
+    m1: {F: [0, 0, 8], H: [0, 0, 9]}
+  kappa_pensions: {prive: 10, public: 20, independants: 5}      # pension moyenne par catégorie ; moyenne de tous les retraités = 10, donc kappa = 1, 2, 0,5
+  all_retirees_pension: 10

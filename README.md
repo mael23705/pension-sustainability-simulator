@@ -2,7 +2,7 @@
 
 Simulateur Python de la soutenabilité financière d'un régime de retraite par répartition, sur 40 ans (2026-2065), avec incertitude Monte-Carlo.
 
-**Statut : phases 1 (conception) et 2 (moteur démographique) terminées, phase 3 (moteur financier) à venir.** Aucun résultat actuariel n'est publié à ce stade.
+**Statut : phases 1 (conception), 2 (moteur démographique) et 3 (moteur financier) terminées, phase 4 (indicateurs actuariels) à venir.** Les résultats de la phase 3 décrivent le comportement du modèle sous ses hypothèses ; ils ne sont pas des prévisions.
 
 ## Problème
 
@@ -48,7 +48,7 @@ Les fichiers bruts (Insee, Drees, COR, DGAFP, MSA) ne sont **pas versionnés** :
 | `config/assumptions.yaml` | Tous les paramètres, avec statut et source ; aucune valeur codée en dur dans le code |
 | `src/` | Code du simulateur (voir [`docs/architecture.md`](docs/architecture.md)) |
 | `tests/` | Tests Pytest |
-| `scripts/` | Vérification des fichiers bruts, comparabilité avec l'Insee, reproduction de la projection, graphiques |
+| `scripts/` | Vérification des fichiers bruts, tables dérivées, comparabilité avec l'Insee, reproduction de la projection, calibration de la phase 3, graphiques |
 | `notebooks/` | Exploration ; le code utile est déplacé vers `src/` |
 | `data/raw/`, `data/processed/` | Données (ignorées par Git) |
 | `LEARNING.md` | Journal d'apprentissage du projet |
@@ -62,7 +62,7 @@ pip install -r requirements.txt
 pytest
 ```
 
-Les fichiers Insee sont à placer à la main dans `data/raw/` (`python scripts/check_raw_data.py` les vérifie). Sans eux, les tests qui les lisent sont ignorés.
+Les fichiers Insee, l'enquête Emploi (`DD_EEC_ANNUEL_2025_CSV_FR.zip`) et l'EACR (`62 EACR diffusée Part 1 - version du 26 mai 2026.xlsx`) sont à placer à la main dans `data/raw/` (`python scripts/check_raw_data.py` les vérifie ; `build_employment_table.py` et `build_eacr_tables.py` créent les tables dérivées). Sans eux, les tests qui les lisent sont ignorés.
 
 ## Phase 2 : moteur démographique
 
@@ -72,13 +72,21 @@ Le moteur projette la population par catégorie, sexe et âge de 2026 à 2066 (c
 
 Cette comparaison contrôle l'**implémentation** : se rapprocher d'une projection construite avec les mêmes hypothèses ne valide pas la capacité à prévoir la démographie. Les conventions de calcul et les écarts connus sont dans [`docs/conventions-moteur.md`](docs/conventions-moteur.md) et [`docs/comparabilite-insee.md`](docs/comparabilite-insee.md).
 
+## Phase 3 : moteur financier
+
+Le moteur calcule cotisants, retraités, prestations, cotisations, déficit $D_t$ et réserve $R_t$ de 2026 à 2065, en euros constants 2026, entièrement vectorisé (axe `sim` en tête, une seule boucle sur les années). Il est calibré sur 2026 : $\tau_0 = B_{2026}/A_{2026}$ = 27,81 %, taux de calibration du modèle qui annule $D_{2026}$ par construction. Dans le scénario central avec réserve initiale nulle, le déficit annuel passe de 5 Md€ en 2027 à 111 Md€ en 2065 : c'est une propriété du modèle sous ses hypothèses (productivité 0,7 %, chômage 7 %, rendement réel des réserves 1 %), pas une prévision.
+
+![Finances du régime, 2026-2065, scénario central](docs/figures/finance-2026-2065.png)
+
+Les résultats complets, les limites (coude de l'âge légal en 2030-2031, stock de retraités masculins sous-estimé) et les points ouverts sont dans [`docs/bilan-phase-3.md`](docs/bilan-phase-3.md). `python scripts/calibrate_phase3.py` publie les paramètres calibrés ; le notebook [`notebooks/02_vectorisation.ipynb`](notebooks/02_vectorisation.ipynb) détaille la vectorisation.
+
 ## Feuille de route
 
 | Phase | Contenu | État |
 |---|---|---|
 | 1 | Conception : cahier des charges, données, hypothèses, validation | Terminée |
 | 2 | Moteur démographique et tests | Terminée |
-| 3 | Moteur financier et calibration de 2026 | À venir |
+| 3 | Moteur financier et calibration de 2026 | Terminée |
 | 4 | Indicateurs actuariels ; première version publiable | À venir |
 | 5 | Incertitude : Monte-Carlo, critères A et B | À venir |
 | 6 à 8 | Réformes et équité, agent IA, application finale (optionnelles) | À venir |

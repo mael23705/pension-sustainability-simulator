@@ -20,8 +20,14 @@ Une ligne par notion apprise. Les lignes ci-dessous sont des amorces à reformul
 | 25/11/2026 | GitHub Actions | Un workflow = `on`, `jobs`, `steps` : installer les dépendances puis lancer `pytest` à chaque push | `.github/workflows/tests.yml` | Onglet Actions du dépôt |
 | 25/11/2026 | Piège : `>` en PowerShell | Dans Windows PowerShell 5, `>` écrit en UTF-16 et Git voit un fichier binaire ; utiliser `Set-Content -Encoding ascii` | `requirements-lock.txt` | Commit du lock |
 | 25/11/2026 | Piège : un paquet `io` masque le module standard | Nommer le paquet `data_io` | `src/data_io/` | `docs/architecture.md`, section 8 |
+| 26/11/2026 | Axes et `shape` d'un modèle vectorisé | Convention `[sim, t]` pour les trajectoires, `[t, c, s, k]` pour la population ; on écrit la forme de chaque tableau en commentaire | `src/actuarial_model/model.py` | `tests/test_finance.py` |
+| 26/11/2026 | `np.add.at` et matrice de transfert | Accumuler des poids dans `M[génération, année]` sans boucle ; le bon indice se vérifie contre un calcul cellule par cellule | `src/actuarial_model/model.py` | `tests/test_independent_checks.py` |
+| 26/11/2026 | Vectoriser sur les simulations, boucler sur les années | La réserve est récurrente (`R[t+1]` dépend de `R[t]`), le reste ne l'est pas ; gain d'environ 24 fois sur la double boucle | `src/actuarial_model/finance.py` | `notebooks/02_vectorisation.ipynb` |
+| 26/11/2026 | Calibration en forme fermée | $\tau_0 = B_{2026}/A_{2026}$ et $\lambda = B_{obs}/B_{initial}$ : un rapport, pas une optimisation ; on publie la valeur et l'écart avant recalage | `src/actuarial_model/calibration.py` | `tests/test_calibration.py` |
+| 26/11/2026 | Test de mutation à la main | Introduire un bug volontaire et vérifier qu'un test échoue ; trois mutations sur douze passaient d'abord, d'où des contrôles à boucles explicites | `tests/test_independent_checks.py` | 12 mutations détectées |
+| 26/11/2026 | Pas de troncature d'un taux | $e > 1$ lève une erreur au lieu d'être ramené à 1 ; les données de test se construisent pour respecter la contrainte | `src/economics/employment.py` | `tests/test_employment.py` |
 
-## À apprendre ensuite (phase 2)
+## À apprendre ensuite (phase 4)
 
 Coche une case quand tu sais refaire la notion seul, sans le code sous les yeux.
 
@@ -30,5 +36,6 @@ Coche une case quand tu sais refaire la notion seul, sans le code sous les yeux.
 - [ ] `pytest` et `pytest.approx`
 - [ ] matplotlib : pyramide des âges
 - [ ] GitHub Actions : un workflow minimal qui lance les tests
-
-
+- [ ] NumPy : `einsum`, `np.add.at`, indexation avancée
+- [ ] Calibration : écrire τ₀ et λ sans le code sous les yeux
+- [ ] Test de mutation : introduire un bug, trouver le test qui l'attrape
