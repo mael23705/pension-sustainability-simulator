@@ -169,8 +169,9 @@ macro:
   unemployment_rate_2025: {value: 0.077, status: observed, source: "Insee, enquête Emploi 2025 (fiche 6)"}
   unemployment_rate_2026: {value: 0.079, status: documented_hypothesis, source: "Consensus Forecasts, mai 2026 (fiche 11)"}
   productivity_growth_2026:
-    value: null                 # hypothèse conventionnelle à fixer (le PIB 2026-2029 n'est pas une productivité) ; décision D18
-    status: documented_hypothesis
+    value: 0.007                # convention (option A, 26/11/2026) : égale à la cible COR de 2040, donc transition plate ; le PIB 2026-2029 n'est pas une productivité ; décision D18
+    status: convention
+    test_range: [0.004, 0.010]  # plage du COR (variantes de productivité)
   transition_to_long_term: {start_year: 2026, end_year: 2040, rule: linear, status: convention}   # décision D18
   long_term_sensitivity:        # combinaisons du projet, pas des scénarios officiels du COR
     favorable:   {productivity_growth: 0.010, unemployment_rate: 0.05}
