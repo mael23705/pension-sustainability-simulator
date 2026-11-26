@@ -92,7 +92,12 @@ retirement:
   delta_effective_minus_legal:
     status: calibrated
     method: "âge conjoncturel de départ (EACR, A-Age_conjoncturel) moins âge légal de la génération, arrondi"
-    value: null                 # par catégorie et sexe, à calculer
+    value: null                 # par catégorie et sexe, à calculer (âge légal des générations qui partaient en 2024 : à calculer)
+    reference_effective_age_2024:   # décision D19
+      private_general_regime: {all: 63.60, female: 63.70, male: 63.50, source: "EACR, A-Age_conjoncturel (fiche 10)"}
+      public_proxy: {value: 62.9, source: "SRE civils 63,18 et CNRACL 62,46, pondérés par 1 560 et 1 110 milliers ; la CNRACL inclut des catégories actives (hors v0.1)", status: documented_hypothesis}
+      independents: {value: null, note: "aucune mesure relevée"}
+    provisional_values: {independents: 0}   # delta = 0 provisoire faute de données
     test_range_years: [-1, 1]
     constant_over_horizon: true
 
@@ -108,6 +113,11 @@ pensions:
     method: "pension des nouveaux liquidants / salaire à l'âge de départ, même génération et catégorie"
     fallback_label: "taux de remplacement apparent"
     value: null                 # dépend du brut ou net de m1 (point ouvert, phase 3)
+  stock_breakdown:              # décision D17
+    status: documented_hypothesis
+    rule: "p_{c,s,a} = m1_{s,a} x kappa_{c,s} x 1.0312, recalé par un facteur unique lambda sur le total observé"
+    kappa_cs: {value: null, status: calibrated, source: "Panorama DREES 2026, tableau 4 (niveaux relatifs par régime principal et sexe)"}
+    lambda_diagnostics: [lambda, expenditure_before, expenditure_after, reference_total, gap_percent]   # à publier ; lambda = indicateur de cohérence
   stock_pensions_2026:
     status: observed
     source: "EACR, table C-Droits_directs, m1 (dernière année : 2024)"
@@ -130,7 +140,11 @@ employment:
     profile_source: enquete_emploi_2025   # profil par âge et sexe, mis à l'échelle par un facteur unique
     scale_factor: {value: null, test_range: [1.00, 1.04], status: calibrated}   # 30,6 / 29,4 environ ; à calculer en phase 3
     value: null                 # chargement dans le moteur : phase 3
-  conditional_rate_rule: "e = e_obs / (1 - rho) ; jamais plafonné ; violation => échec du test"
+  conditional_rate_rule: "e = e_obs / (1 - rho_bar), rho_bar agrégé sur les catégories avec les effectifs présents ; e = 0 si rho_bar = 1 ; jamais plafonné ; violation => échec du test (décision D16)"
+  retiree_employment_rate: {value: 0.0, status: convention, source: "décision D16 : pas d'emploi des retraités au régime en v0.1"}
+  unemployment_link:
+    status: documented_hypothesis
+    rule: "e_obs_t = e_obs_2025 x (1 - u_t) / (1 - u_2025) ; e > 1 => échec, pas de troncature"   # décision D18b
 
 wages:
   status: observed
@@ -152,6 +166,16 @@ macro:
     status: official_projection
     from_year: 2040
     test_range: [0.05, 0.10]
+  unemployment_rate_2025: {value: 0.077, status: observed, source: "Insee, enquête Emploi 2025 (fiche 6)"}
+  unemployment_rate_2026: {value: 0.079, status: documented_hypothesis, source: "Consensus Forecasts, mai 2026 (fiche 11)"}
+  productivity_growth_2026:
+    value: null                 # hypothèse conventionnelle à fixer (le PIB 2026-2029 n'est pas une productivité) ; décision D18
+    status: documented_hypothesis
+  transition_to_long_term: {start_year: 2026, end_year: 2040, rule: linear, status: convention}   # décision D18
+  long_term_sensitivity:        # combinaisons du projet, pas des scénarios officiels du COR
+    favorable:   {productivity_growth: 0.010, unemployment_rate: 0.05}
+    central:     {productivity_growth: 0.007, unemployment_rate: 0.07}
+    unfavorable: {productivity_growth: 0.004, unemployment_rate: 0.10}
   fertility_cor_sensitivity: {test_range: [1.2, 1.7], status: official_projection}
   net_migration_cor_sensitivity: {test_range: [70000, 230000], status: official_projection}
 
